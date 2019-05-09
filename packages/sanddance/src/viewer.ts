@@ -465,7 +465,7 @@ export class Viewer {
         deckProps.layers.splice(order, 0, polygonLayer);
         finalizeLegend(this.insight.colorBin, this._specColumns.color, stage.legend, this.options.language);
         if (this.options.onStage) {
-            this.options.onStage(stage, deckProps);
+            this.options.onStage(stage, deckProps, this.specCapabilities);
         }
     }
 

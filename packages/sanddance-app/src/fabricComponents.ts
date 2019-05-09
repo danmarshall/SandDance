@@ -6,6 +6,7 @@ import {
   IconButton,
   PrimaryButton
 } from 'office-ui-fabric-react/lib/components/Button';
+import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { ChoiceGroup } from 'office-ui-fabric-react/lib/ChoiceGroup';
 import { ComboBox } from 'office-ui-fabric-react/lib/components/ComboBox';
 import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/components/ContextualMenu';
@@ -26,6 +27,7 @@ initializeIcons();
 
 export const fabric: FabricComponents = {
   ActionButton: ActionButton as any,
+  Callout,
   ChoiceGroup,
   ComboBox: ComboBox as any,
   ContextualMenuItemType,

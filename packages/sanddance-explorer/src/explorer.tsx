@@ -30,6 +30,10 @@ import { strings } from './language';
 import { themePalettes } from './themes';
 import { Topbar, TopBarButtonProps } from './controls/topbar';
 
+interface AxisPolygon extends SandDance.types.Polygon {
+  axis: SandDance.VegaDeckGl.types.Axis;
+}
+
 export interface Props {
   logoClickUrl?: string;
   logoClickTarget?: string;
@@ -44,6 +48,7 @@ export interface Props {
 }
 
 export interface State extends SandDance.types.Insight {
+  calloutHidden: boolean;
   calculating: () => void;
   errors: string[];
   autoCompleteDistinctValues: AutoCompleteDistinctValues;
@@ -105,6 +110,7 @@ export class Explorer extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      calloutHidden: true,
       calculating: null,
       errors: null,
       autoCompleteDistinctValues: {},
@@ -138,7 +144,7 @@ export class Explorer extends React.Component<Props, State> {
     this.state.selectedItemIndex[DataScopeId.SelectedData] = 0;
 
     this.discardColorContextUpdates = true;
-    this.updateViewerOptions({ ...SandDance.VegaDeckGl.util.clone(SandDance.Viewer.defaultViewerOptions), ...props.viewerOptions });
+    this.updateViewerOptions(SandDance.VegaDeckGl.util.deepMerge(SandDance.VegaDeckGl.util.clone(SandDance.Viewer.defaultViewerOptions), props.viewerOptions));
   }
 
   public updateViewerOptions(viewerOptions: Partial<SandDance.types.ViewerOptions>) {
@@ -182,6 +188,56 @@ export class Explorer extends React.Component<Props, State> {
         viewerOptions && viewerOptions.onError && viewerOptions.onError(errors);
       }
     };
+    this.viewerOptions.onStage = (stage, deckProps, specCapabilities) => {
+
+
+      const polygons: AxisPolygon[] = [];
+
+      function zzz(axes: SandDance.VegaDeckGl.types.Axis[]) {
+        if (axes) {
+          axes.forEach(axis => {
+            const capability = specCapabilities.roles.filter(role => role.role === axis.role)[0];
+            if (capability && capability.axisSelection) {
+              const { x1, x2, y1, y2 } = axis.titleRect;
+              polygons.push({
+                axis,
+                polygon: [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+              });
+            }
+          });
+        }
+      }
+
+      zzz(stage.axes.x);
+      zzz(stage.axes.y);
+
+      //move polygons to Z
+      polygons.forEach(datum => {
+        (datum.polygon as number[][]).forEach(p => {
+          p[2] = this.viewerOptions.selectionPolygonZ;
+        });
+      });
+      const polygonLayer = new SandDance.VegaDeckGl.base.layers.PolygonLayer({
+        autoHighlight: true,
+        coordinateSystem: SandDance.VegaDeckGl.base.deck.COORDINATE_SYSTEM.IDENTITY,
+        data: polygons,
+        extruded: false,
+        highlightColor: this.viewerOptions.colors.axisSelectHighlight,
+        id: 'AXISselections', //TODO
+        onClick: (o, e) => {
+          console.log((o.object as AxisPolygon).axis);
+          //clickHandler(e.srcEvent, (o.object as SelectPolygon).search)
+        },
+        getElevation: () => 0,
+        getFillColor: () => [0, 0, 0, 0],
+        pickable: true,
+        stroked: false
+      });
+
+      deckProps.layers.push(polygonLayer);
+      //this.viewer.presenter.deckgl.setProps(deckProps);
+    };
+
     if (this.viewer && this.viewer.presenter) {
       const newPresenterStyle = SandDance.util.getPresenterStyle(this.viewerOptions as SandDance.types.ViewerOptions);
       const mergePrenterStyle = { ...this.viewer.presenter.style, ...newPresenterStyle };
@@ -325,9 +381,7 @@ export class Explorer extends React.Component<Props, State> {
     this.setState(newState as State);
   }
 
-  changespecCapabilities(
-    specCapabilities: SandDance.types.SpecCapabilities
-  ) {
+  changespecCapabilities(specCapabilities: SandDance.types.SpecCapabilities) {
     this.setState({ specCapabilities });
   }
 
@@ -864,6 +918,12 @@ export class Explorer extends React.Component<Props, State> {
               <div key={i}>{error}</div>
             ))}
           </Dialog>
+          <base.fabric.Callout
+            isBeakVisible={false}
+            hidden={this.state.calloutHidden}
+          >
+            hello world
+          </base.fabric.Callout>
         </div>
       </div>
     );

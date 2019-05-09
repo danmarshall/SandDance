@@ -8,6 +8,7 @@ import {
   IconButton,
   PrimaryButton
 } from 'office-ui-fabric-react/lib/components/Button';
+import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { ChoiceGroup } from 'office-ui-fabric-react/lib/ChoiceGroup';
 import { ComboBox } from 'office-ui-fabric-react/lib/components/ComboBox';
 import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/components/ContextualMenu';
@@ -26,6 +27,7 @@ export { FabricTypes };
 
 export interface FabricComponents {
   ActionButton: FabricTypes.IReactCast<FabricTypes.IButtonProps>;
+  Callout: typeof Callout;
   ChoiceGroup: typeof ChoiceGroup;
   ComboBox: FabricTypes.IReactCast<FabricTypes.IComboBoxProps>;
   ContextualMenuItemType: typeof ContextualMenuItemType;

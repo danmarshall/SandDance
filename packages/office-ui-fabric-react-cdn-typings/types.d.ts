@@ -7,6 +7,8 @@ export {
   IButtonStyles
 } from "office-ui-fabric-react/lib/components/Button";
 
+export { ICalloutProps } from 'office-ui-fabric-react/lib/Callout';
+
 export {
   IContextualMenuItem,
   IContextualMenuProps
