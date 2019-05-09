@@ -15,10 +15,7 @@ import { Stage, TickText } from '../interfaces';
 const markStager: MarkStager = (options: MarkStagerOptions, stage: Stage, scene: Scene, x: number, y: number, groupType: GroupType) => {
 
     //scale Deck.Gl text to Vega size
-    const fontScale = 6;
-
-    //Deck.gl centers text on Y. TODO: is this correct on x axis?
-    const offsetYCenter = 16;
+    const fontScale = 9;
 
     //change direction of y from SVG to GL
     const ty = -1;
@@ -29,7 +26,7 @@ const markStager: MarkStager = (options: MarkStagerOptions, stage: Stage, scene:
         const textItem: TextLayerDatum = {
             color: colorFromString(item.fill),
             text: item.text.toString(),
-            position: [x + item.x - options.offsetX, ty * (y + item.y + offsetYCenter - options.offsetY), 0],
+            position: [x + item.x - options.offsetX, ty * (y + item.y - options.offsetY), 0],
             size,
             angle: convertAngle(item.angle),
             textAnchor: convertAlignment(item.align),
@@ -43,6 +40,16 @@ const markStager: MarkStager = (options: MarkStagerOptions, stage: Stage, scene:
         } else if (options.currFacetRect && !options.currFacetRect.facetTitle) {
             options.currFacetRect.facetTitle = textItem;
         } else {
+            if (item.mark.role === "axis-title") {
+                let { x1, x2, y1, y2 } = item.bounds;
+                x1 += x - options.offsetX;
+                x2 += x - options.offsetX;
+                y1 += y - options.offsetY;
+                y2 += y - options.offsetY;
+                y1 *= ty;
+                y2 *= ty;
+                options.currAxis.titleRect = { x1, x2, y1, y2 };
+            }
             stage.textData.push(textItem);
         }
     });

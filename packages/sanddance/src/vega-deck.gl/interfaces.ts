@@ -4,7 +4,7 @@ import { Color } from '@deck.gl/core/utils/color';
 import { DeckProps, PickInfo } from '@deck.gl/core/lib/deck';
 import { LightSettings } from '@deck.gl/core/lib/layer';
 import { LineLayerDatum } from '@deck.gl/layers/line-layer/line-layer';
-import { Scene } from 'vega-typings';
+import { Bounds, Scene } from 'vega-typings';
 import { TextLayerDatum } from '@deck.gl/layers/text-layer/text-layer';
 
 export interface StyledLine extends LineLayerDatum {
@@ -15,7 +15,11 @@ export interface TickText extends TextLayerDatum {
     value: number | string;
 }
 
+export type AxisRole = 'x' | 'y' | 'z';
+
 export interface Axis {
+    titleRect: Bounds;
+    role: AxisRole;
     domain: StyledLine;
     ticks: StyledLine[];
     tickText: TickText[];
@@ -131,6 +135,7 @@ export interface PresenterConfig {
     redraw?: () => void;
     onCubeHover?: (e: MouseEvent | PointerEvent | TouchEvent, cube: Cube) => void;
     onCubeClick?: (e: MouseEvent | PointerEvent | TouchEvent, cube: Cube) => void;
+    onAxisTitleClick?: (e: MouseEvent | PointerEvent | TouchEvent, axis: Axis) => void;
     onLayerClick?: (info: PickInfo, pickedInfos: PickInfo[], e: MouseEvent) => any;
     onLegendClick?: (e: MouseEvent | PointerEvent | TouchEvent, legend: Legend, clickedIndex: number) => void;
     onPresent?: () => void;

@@ -6,6 +6,7 @@ import rule, { box } from './marks/rule';
 import text from './marks/text';
 import {
     Axis,
+    AxisRole,
     FacetRect,
     Stage,
     StyledLine
@@ -84,20 +85,25 @@ const group: MarkStager = (options: MarkStagerOptions, stage: Stage, scene: Scen
 
 function setCurrentAxis(options: MarkStagerOptions, stage: Stage, groupType: GroupType) {
     let axes: Axis[];
+    let role: AxisRole;
     switch (groupType) {
         case GroupType.xAxis:
             axes = stage.axes.x;
+            role = 'x';
             break;
         case GroupType.yAxis:
             axes = stage.axes.y;
+            role = 'y';
             break;
         default:
             return;
     }
     options.currAxis = {
+        role,
         domain: null,
         tickText: [],
-        ticks: []
+        ticks: [],
+        titleRect: null
     };
     axes.push(options.currAxis);
 }

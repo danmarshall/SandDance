@@ -110,7 +110,12 @@ export interface ViewerOptions extends SpecViewOptions {
     /**
      * Optional handler when axis is clicked.
      */
-    onAxisClick?: (e: TouchEvent | MouseEvent | PointerEvent, serch: SearchExpressionGroup) => void;
+    onAxisClick?: (e: TouchEvent | MouseEvent | PointerEvent, search: SearchExpressionGroup) => void;
+   
+    /**
+     * Optional handler when axis is clicked.
+     */
+    onAxisLabelClick?: (e: TouchEvent | MouseEvent | PointerEvent, axis: VegaDeckGl.types.Axis) => void;
 
     /**
      * Optional handler when legend row is clicked.
