@@ -151,7 +151,7 @@ export class Viewer {
                     finalizeLegend(this.insight.colorBin, this._specColumns.color, stage.legend, this.options.language);
                     applyColorMapToCubes([oldColorContext.colorMap], VegaDeckGl.util.getCubes(deckProps));
                     if (this.options.onStage) {
-                        this.options.onStage(stage, deckProps);
+                        this.options.onStage(stage, deckProps, this.specCapabilities);
                     }
                 }
             });
@@ -162,7 +162,7 @@ export class Viewer {
                 preStage: (stage, deckProps) => {
                     finalizeLegend(this.insight.colorBin, this._specColumns.color, stage.legend, this.options.language);
                     if (this.options.onStage) {
-                        this.options.onStage(stage, deckProps);
+                        this.options.onStage(stage, deckProps, this.specCapabilities);
                     }
                 }
             });
