@@ -10,7 +10,7 @@ import {
     SceneTextAlign,
     SceneTextBaseline
 } from 'vega-typings';
-import { Stage, TickText } from '../interfaces';
+import { Stage, TextLayerItem, TickText } from '../interfaces';
 
 const markStager: MarkStager = (options: MarkStagerOptions, stage: Stage, scene: Scene, x: number, y: number, groupType: GroupType) => {
 
@@ -23,7 +23,8 @@ const markStager: MarkStager = (options: MarkStagerOptions, stage: Stage, scene:
     base.vega.sceneVisit(scene, function (item: SceneText) {
         if (!item.text) return;
         const size = item.fontSize * fontScale;
-        const textItem: TextLayerDatum = {
+        const textItem: TextLayerItem = {
+            textRole: item.mark.role,
             color: colorFromString(item.fill),
             text: item.text.toString(),
             position: [x + item.x - options.offsetX, ty * (y + item.y - options.offsetY), 0],

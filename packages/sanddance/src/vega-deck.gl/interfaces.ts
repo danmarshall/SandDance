@@ -11,7 +11,11 @@ export interface StyledLine extends LineLayerDatum {
     strokeWidth?: number;
 }
 
-export interface TickText extends TextLayerDatum {
+export interface TextLayerItem extends TextLayerDatum {
+    textRole: string;
+}
+
+export interface TickText extends TextLayerItem {
     value: number | string;
 }
 
@@ -66,7 +70,7 @@ export interface Scene3d extends Scene {
  * Rect area and title for a facet.
  */
 export interface FacetRect {
-    facetTitle?: TextLayerDatum;
+    facetTitle?: TextLayerItem;
     lines: StyledLine[];
 }
 
@@ -81,7 +85,7 @@ export interface Stage {
         x: Axis[];
         y: Axis[];
     };
-    textData: TextLayerDatum[];
+    textData: TextLayerItem[];
     view: View;
     gridLines?: StyledLine[];
     facets?: FacetRect[];
