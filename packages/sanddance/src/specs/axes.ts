@@ -18,6 +18,7 @@ export function partialAxes(specViewOptions: SpecViewOptions, xColumn: Column, y
         "labelAngle": {
             "signal": SignalNames.TextAngleX
         },
+        "labelBaseline": "middle",
         "labelFontSize": {
             "signal": SignalNames.TextSize
         },
@@ -25,6 +26,7 @@ export function partialAxes(specViewOptions: SpecViewOptions, xColumn: Column, y
             "signal": SignalNames.TextAngleX
         },
         "titleAlign": "left",
+        "titleBaseline": "middle",
         "titleFontSize": {
             "signal": SignalNames.TextTitleSize
         },
@@ -42,6 +44,7 @@ export function partialAxes(specViewOptions: SpecViewOptions, xColumn: Column, y
         "labelAngle": {
             "signal": SignalNames.TextAngleY
         },
+        "labelBaseline": "middle",
         "labelFontSize": {
             "signal": SignalNames.TextSize
         },
@@ -49,6 +52,7 @@ export function partialAxes(specViewOptions: SpecViewOptions, xColumn: Column, y
             "signal": SignalNames.TextAngleY
         },
         "titleAlign": "right",
+        "titleBaseline": "middle",
         "titleFontSize": {
             "signal": SignalNames.TextTitleSize
         },
