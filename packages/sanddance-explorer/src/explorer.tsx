@@ -190,52 +190,84 @@ export class Explorer extends React.Component<Props, State> {
     };
     this.viewerOptions.onStage = (stage, deckProps, specCapabilities) => {
 
-
-      const polygons: AxisPolygon[] = [];
-
-      function zzz(axes: SandDance.VegaDeckGl.types.Axis[]) {
-        if (axes) {
-          axes.forEach(axis => {
-            const capability = specCapabilities.roles.filter(role => role.role === axis.role)[0];
-            if (capability && capability.axisSelection) {
-              const { x1, x2, y1, y2 } = axis.titleRect;
-              polygons.push({
-                axis,
-                polygon: [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
-              });
-            }
-          });
+      const clickableTextItems: SandDance.VegaDeckGl.types.TextLayerItem[] = [];
+      const newTextItems: SandDance.VegaDeckGl.types.TextLayerItem[] = [];
+      const textItems = SandDance.VegaDeckGl.util.getTextItems(deckProps);
+      textItems.forEach((textItem, i) => {
+        if (textItem.textRole === 'axis-title') {
+          clickableTextItems.push(textItem);
+        } else {
+          newTextItems.push(textItem);
         }
+      });
+      if (clickableTextItems.length) {
+        let textIndex: number;
+        deckProps.layers.forEach((layer, i) => {
+          if (layer.id === SandDance.VegaDeckGl.constants.layerNames.text) {
+            textIndex = i;
+          }
+        });
+        const newTextLayerProps = SandDance.VegaDeckGl.util.textLayerProps(newTextItems);
+        const newTextLayer = new SandDance.VegaDeckGl.base.layers.TextLayer(newTextLayerProps);
+        deckProps.layers[textIndex] = newTextLayer;
+
+        const clickableTextLayerProps = SandDance.VegaDeckGl.util.textLayerProps(clickableTextItems);
+        clickableTextLayerProps.id = "CLICKABLE_TEXT";
+        clickableTextLayerProps.pickable = true;
+        clickableTextLayerProps.autoHighlight = true;
+        clickableTextLayerProps['fontSettings'] = {
+          buffer: 10,
+          raduis: 10
+        };
+        clickableTextLayerProps.highlightColor = [255, 0, 0, 200];
+        const clickableTextLayer = new SandDance.VegaDeckGl.base.layers.TextLayer(clickableTextLayerProps);
+        deckProps.layers.splice(textIndex, 0, clickableTextLayer);
       }
 
-      zzz(stage.axes.x);
-      zzz(stage.axes.y);
+      // const polygons: AxisPolygon[] = [];
 
-      //move polygons to Z
-      polygons.forEach(datum => {
-        (datum.polygon as number[][]).forEach(p => {
-          p[2] = this.viewerOptions.selectionPolygonZ;
-        });
-      });
-      const polygonLayer = new SandDance.VegaDeckGl.base.layers.PolygonLayer({
-        autoHighlight: true,
-        coordinateSystem: SandDance.VegaDeckGl.base.deck.COORDINATE_SYSTEM.IDENTITY,
-        data: polygons,
-        extruded: false,
-        highlightColor: this.viewerOptions.colors.axisSelectHighlight,
-        id: 'AXISselections', //TODO
-        onClick: (o, e) => {
-          console.log((o.object as AxisPolygon).axis);
-          //clickHandler(e.srcEvent, (o.object as SelectPolygon).search)
-        },
-        getElevation: () => 0,
-        getFillColor: () => [0, 0, 0, 0],
-        pickable: true,
-        stroked: false
-      });
+      // function zzz(axes: SandDance.VegaDeckGl.types.Axis[]) {
+      //   if (axes) {
+      //     axes.forEach(axis => {
+      //       const capability = specCapabilities.roles.filter(role => role.role === axis.role)[0];
+      //       if (capability && capability.axisSelection) {
+      //         const { x1, x2, y1, y2 } = axis.titleRect;
+      //         polygons.push({
+      //           axis,
+      //           polygon: [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+      //         });
+      //       }
+      //     });
+      //   }
+      // }
 
-      deckProps.layers.push(polygonLayer);
-      //this.viewer.presenter.deckgl.setProps(deckProps);
+      // zzz(stage.axes.x);
+      // zzz(stage.axes.y);
+
+      // //move polygons to Z
+      // polygons.forEach(datum => {
+      //   (datum.polygon as number[][]).forEach(p => {
+      //     p[2] = this.viewerOptions.selectionPolygonZ;
+      //   });
+      // });
+      // const polygonLayer = new SandDance.VegaDeckGl.base.layers.PolygonLayer({
+      //   autoHighlight: true,
+      //   coordinateSystem: SandDance.VegaDeckGl.base.deck.COORDINATE_SYSTEM.IDENTITY,
+      //   data: polygons,
+      //   extruded: false,
+      //   highlightColor: this.viewerOptions.colors.axisSelectHighlight,
+      //   id: 'AXISselections', //TODO
+      //   onClick: (o, e) => {
+      //     console.log((o.object as AxisPolygon).axis);
+      //     //clickHandler(e.srcEvent, (o.object as SelectPolygon).search)
+      //   },
+      //   getElevation: () => 0,
+      //   getFillColor: () => [0, 0, 0, 0],
+      //   pickable: true,
+      //   stroked: false
+      // });
+
+      // deckProps.layers.push(polygonLayer);
     };
 
     if (this.viewer && this.viewer.presenter) {

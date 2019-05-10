@@ -6,17 +6,18 @@ import {
     Cube,
     PresenterConfig,
     Stage,
-    StyledLine
+    StyledLine,
+    TextLayerItem
 } from './interfaces';
 import { CubeLayer, CubeLayerInterpolatedProps, CubeLayerProps } from './cube-layer/cube-layer';
 import { DeckProps } from '@deck.gl/core/lib/deck';
 import { easeExpInOut } from 'd3-ease';
 import { Layer } from 'deck.gl';
 import { layerNames } from './constants';
-import { LightSettings, TransitionTiming } from '@deck.gl/core/lib/layer';
+import { LayerProps, LightSettings, TransitionTiming } from '@deck.gl/core/lib/layer';
 import { LinearInterpolator_Class } from './deck.gl-classes/linearInterpolator';
-import { TextLayerDatum } from '@deck.gl/layers/text-layer/text-layer';
 import { Presenter } from './presenter';
+import { TextLayerProps } from '@deck.gl/layers/text-layer/text-layer';
 
 export function getLayers(presenter: Presenter, config: PresenterConfig, stage: Stage, highlightColor: number[], lightSettings: LightSettings, lightingMix: number, interpolator: LinearInterpolator_Class<CubeLayerInterpolatedProps>, guideLines: StyledLine[]): Layer[] {
     const cubeLayer = newCubeLayer(presenter, config, stage.cubeData, highlightColor, lightSettings, lightingMix, interpolator);
@@ -37,7 +38,7 @@ export function getLayers(presenter: Presenter, config: PresenterConfig, stage: 
         });
     }
     const lineLayer = newLineLayer(layerNames.lines, lines);
-    const textLayer = newTextLayer(layerNames.text, texts);
+    const textLayer = newTextLayer(texts);
     return [textLayer, cubeLayer, lineLayer];
 }
 
@@ -58,8 +59,8 @@ function newCubeLayer(presenter: Presenter, config: PresenterConfig, cubeData: C
             config.onCubeClick(e && e.srcEvent, o.object as Cube);
         },
         onHover: (o, e) => {
-             if (o.index === -1) {
-                 presenter.deckgl.interactiveState.onCube = false;
+            if (o.index === -1) {
+                presenter.deckgl.interactiveState.onCube = false;
             } else {
                 presenter.deckgl.interactiveState.onCube = true;
                 config.onCubeHover(e && e.srcEvent, o.object as Cube);
@@ -85,16 +86,22 @@ function newLineLayer(id: string, data: StyledLine[]) {
     });
 }
 
-function newTextLayer(id: string, data: TextLayerDatum[]) {
-    return new base.layers.TextLayer({
-        id,
+export function textLayerProps(data: TextLayerItem[]) {
+    const props: LayerProps & TextLayerProps = {
+        id: layerNames.text,
         data,
         coordinateSystem: base.deck.COORDINATE_SYSTEM.IDENTITY,
         getColor: o => o.color,
         getTextAnchor: o => o.textAnchor,
         getSize: o => o.size,
         getAngle: o => o.angle
-    });
+    };
+    return props;
+}
+
+function newTextLayer(data: TextLayerItem[]) {
+    const props = textLayerProps(data);
+    return new base.layers.TextLayer(props);
 }
 
 function getTiming(duration: number, easing?: (t: number) => number) {
@@ -119,4 +126,15 @@ export function getCubes(deckProps: DeckProps) {
     if (!cubeLayer) return;
     const cubeLayerProps = cubeLayer.props as CubeLayerProps;
     return cubeLayerProps.data;
+}
+
+export function getTextLayer(deckProps: DeckProps) {
+    return deckProps.layers.filter(layer => layer.id === layerNames.text)[0];
+}
+
+export function getTextItems(deckProps: DeckProps) {
+    const textLayer = getTextLayer(deckProps);
+    if (!textLayer) return;
+    const textLayerProps = textLayer.props as TextLayerProps;
+    return textLayerProps.data as TextLayerItem[];
 }
