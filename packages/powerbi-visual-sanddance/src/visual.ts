@@ -24,11 +24,16 @@ module powerbi.extensibility.visual {
         pointsize: number;
     }
 
+    export interface Zzz {
+        zzz: string;
+    }
+
     export interface Settings {
         sandDanceMainSettings: SandDanceMainSettings;
         sandDanceColorCategoricalSettings?: SandDanceColorCategoricalSettings;
         sandDanceColorNumericSettings?: SandDanceColorNumericSettings;
         sandDanceScatterPlotSettings?: SandDanceScatterPlotSettings;
+        zzz?: Zzz;
     }
 
     export interface Global {
@@ -42,11 +47,15 @@ module powerbi.extensibility.visual {
         private viewer: SandDance.Viewer;
         private viewElement: HTMLElement;
         private errorElement: HTMLElement;
+        private buttonElement: HTMLElement;
         private ordinalMap: SandDance.types.OrdinalMap;
+        private host: IVisualHost;
 
         constructor(options: VisualConstructorOptions) {
             //un-comment for debug
-            //console.log('Visual constructor', options);
+            console.log('Visual constructor', options);
+
+            this.host = options.host;
 
             var w = window as any as {
                 vega: SandDance.VegaDeckGl.types.VegaBase;
@@ -63,6 +72,18 @@ module powerbi.extensibility.visual {
             this.viewElement = global.SandDance.VegaDeckGl.util.addDiv(options.element, 'sanddance-view');
             this.errorElement = global.SandDance.VegaDeckGl.util.addDiv(options.element, 'sanddance-error');
             this.errorElement.style.position = 'absolute';
+            this.buttonElement = global.SandDance.VegaDeckGl.util.addDiv(options.element, 'sanddance-button');
+            this.buttonElement.style.position = 'absolute';
+            const button = document.createElement('button');
+            button.innerText = "click me";
+            button.addEventListener('click', () => {
+
+                console.log('changed zzz to baz');
+                this.settings.zzz = { zzz: "baz" };
+                this.host.persistProperties({ replace: [{ objectName: "zzz", selector: null, properties: this.settings.zzz as any }] });
+
+            });
+            this.buttonElement.appendChild(button);
 
             this.settings = {
                 sandDanceMainSettings: {
@@ -79,6 +100,9 @@ module powerbi.extensibility.visual {
                 },
                 sandDanceScatterPlotSettings: {
                     pointsize: 5
+                },
+                zzz: {
+                    zzz: "bbb"
                 }
             };
 
@@ -119,7 +143,7 @@ module powerbi.extensibility.visual {
 
         public update(options: VisualUpdateOptions) {
             //un-comment for debug
-            //console.log('Visual update', options);
+            console.log('Visual update', options);
 
             const dataView = options && options.dataViews && options.dataViews[0];
             if (!dataView) {
@@ -188,6 +212,8 @@ module powerbi.extensibility.visual {
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
 
+            console.log('enumerateObjectInstances', objectName);
+
             switch (objectName) {
 
                 case 'sandDanceMainSettings':
@@ -231,6 +257,17 @@ module powerbi.extensibility.visual {
                         objectEnumeration.push(o);
                     }
                     break;
+
+                case 'zzz':
+                    console.log('zzzzzzzz');
+                    var o: VisualObjectInstance = {
+                        objectName: objectName,
+                        properties: this.settings.zzz as any,
+                        selector: null
+                    };
+                    objectEnumeration.push(o);
+                    break;
+
             };
             return objectEnumeration;
         }

@@ -1,22 +1,26 @@
 {
     "dataRoles": [
         {
-            "displayName": "Unique Id",
+            "displayName": "Unique Id 🛈",
+            "description": "Unique identifier",
             "name": "uid",
             "kind": "GroupingOrMeasure"
         },
         {
-            "displayName": "X Axis",
+            "displayName": "X Axis 🛈",
+            "description": "X axis field - used for Scatter plot, Density, Bar chart, and Stacks charts.",
             "name": "x",
             "kind": "GroupingOrMeasure"
         },
         {
-            "displayName": "Y Axis",
+            "displayName": "Y Axis 🛈",
+            "description": "Y axis field - used for Scatter plot, Density, and Stacks charts.",
             "name": "y",
             "kind": "GroupingOrMeasure"
         },
         {
-            "displayName": "Z Axis",
+            "displayName": "Z Axis (optional) 🛈",
+            "description": "Z axis field - add 3D to Scatter plot, Density, Bar chart, and Treemap charts.",
             "name": "z",
             "kind": "GroupingOrMeasure"
         },
@@ -26,7 +30,8 @@
             "kind": "GroupingOrMeasure"
         },
         {
-            "displayName": "Sort by",
+            "displayName": "Sort by 🛈",
+            "description": "Sort by field - used for Density, Bar chart, and Stacks charts.",
             "name": "sort",
             "kind": "GroupingOrMeasure"
         }
@@ -40,12 +45,16 @@
                     "type": {
                         "enumeration": [
                             {
-                                "value": "barchart",
-                                "displayName": "Column"
+                                "value": "scatterplot",
+                                "displayName": "Scatter plot"
                             },
                             {
-                                "value": "scatterplot",
-                                "displayName": "Scatter"
+                                "value": "density",
+                                "displayName": "Density"
+                            },
+                            {
+                                "value": "barchart",
+                                "displayName": "Bar chart"
                             }
                         ]
                     }
@@ -288,12 +297,23 @@
             }
         },
         "sandDanceScatterPlotSettings": {
-            "displayName": "SandDance Scatter",
+            "displayName": "SandDance Scatter plot",
             "properties": {
                 "pointsize": {
                     "displayName": "Point size",
                     "type": {
                         "numeric": true
+                    }
+                }
+            }
+        },
+        "zzz": {
+            "displayName": "zzz",
+            "properties": {
+                "zzz": {
+                    "displayName": "zzz",
+                    "type": {
+                        "text": true
                     }
                 }
             }
