@@ -1,0 +1,28 @@
+{
+  "Overview": [
+    {
+      "tree": "Introduction",
+      "url": "/help"
+    },
+    {
+      "tree": "Changelog",
+      "url": "/help/changelog"
+    },
+    {
+      "tree": "Contributing",
+      "url": "/help/contributing"
+    }
+  ],
+  "Using": [
+    {
+      "tree": "Using SandDance online",
+      "url": "/help/online"
+    }
+  ],
+  "Data": [
+    {
+      "tree": "CSS Colors",
+      "url": "/help/css-colors"
+    }
+  ]
+}

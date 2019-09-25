@@ -4,7 +4,7 @@ layout: default
 
 <nav class="c-breadcrumbs">
     <div class="o-wrapper">
-        <a href="{{ site.baseurl }}/docs" class="c-breadcrumbs__crumb">Developer docs</a>
+        <a href="{{ site.baseurl }}/help" class="c-breadcrumbs__crumb">Help</a>
     </div>
 </nav>
 
@@ -13,7 +13,7 @@ layout: default
         <div class="o-layout o-layout--large">
             <div class="o-layout__item u-1/4@tablet c-tree-stick">
                 <ul id="site-tree" class="c-tree o-list-bare" role="tree">
-                    {% for tree in site.data.tree %}
+                    {% for tree in site.data.help %}
                     <li class="c-tree__item o-list-bare__item">
                         <div class="c-tree__toggle js-tree-toggle">
                             {{ tree[0] }}
