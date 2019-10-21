@@ -1,0 +1,23 @@
+{
+  "name": "@msrvida/vega-lite-unit",
+  "version": "1.0.0",
+  "description": "Convert Vega-lite specs to Vega specs with unit visualization",
+  "main": "index.js",
+  "scripts": {
+    "eslint": "eslint -c ../../.eslintrc.json --fix ./src/**/*.ts*",
+    "watch-typescript": "tsc -p . -w",
+    "build-typescript": "tsc -p .",
+    "build": "npm run build-typescript",
+    "test-ui": "parcel serve ./test/manual/index.html --port 8087 --open --global VegaLiteUnit",
+    "start": "npm-run-all --parallel watch-typescript test-ui"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "tsx-create-element": "^2",
+    "vega-lite": "^4.0.0-beta.10"
+  },
+  "devDependencies": {
+    "@types/react": "^16.4.2"
+  }
+}
