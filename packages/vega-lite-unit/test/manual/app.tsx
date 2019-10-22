@@ -11,6 +11,7 @@ export interface Input {
 
 export interface Props extends Input {
     textarea: JSX.Element;
+    divRef: (div: HTMLDivElement) => void;
 }
 
 export const App = (props: Props) => {
@@ -19,6 +20,7 @@ export const App = (props: Props) => {
             <h1>Vega-lite-unit test</h1>
             <input></input>
             <button>X</button>
+            <div ref={props.divRef} style={{ height: '600px' }} ></div>
             <div>
                 {props.textarea}
             </div>

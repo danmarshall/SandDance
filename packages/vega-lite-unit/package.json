@@ -8,12 +8,18 @@
     "watch-typescript": "tsc -p . -w",
     "build-typescript": "tsc -p .",
     "build": "npm run build-typescript",
-    "test-ui": "parcel serve ./test/manual/index.html --port 8087 --open --global VegaLiteUnit",
+    "build-monaco-json": "parcel build node_modules/monaco-editor/esm/vs/language/json/json.worker.js --no-source-maps",
+    "build-monaco-css": "parcel build node_modules/monaco-editor/esm/vs/language/css/css.worker.js --no-source-maps",
+    "build-monaco-html": "parcel build node_modules/monaco-editor/esm/vs/language/html/html.worker.js --no-source-maps",
+    "build-monaco-worker": "parcel build node_modules/monaco-editor/esm/vs/editor/editor.worker.js --no-source-maps",
+    "build-monaco-all": "npm run build-monaco-json && npm run build-monaco-css && npm run build-monaco-html && npm run build-monaco-worker",
+    "test-ui": "parcel serve ./test/manual/index.html --port 8087 --open",
     "start": "npm-run-all --parallel watch-typescript test-ui"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "monaco-editor": "^0.18.1",
     "tsx-create-element": "^2",
     "vega-lite": "^4.0.0-beta.10"
   },
