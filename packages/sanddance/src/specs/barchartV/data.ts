@@ -10,6 +10,7 @@ import { facetGroupData, facetSourceData, facetTransforms } from '../facet';
 import { BarChartNameSpace } from '../namespace';
 import { SpecContext } from '../types';
 import { topLookup } from '../top';
+import { dateTransforms, dateFormats } from '../date';
 
 export default function (context: SpecContext, namespace: BarChartNameSpace) {
     const { specColumns, insight, specViewOptions } = context;
@@ -24,6 +25,7 @@ export default function (context: SpecContext, namespace: BarChartNameSpace) {
                 specColumns.facet && facetTransforms(specColumns.facet, insight.facets)
             )
         ],
+        specColumns.x.type === 'date' && dateFormats(context, specColumns.x),
         specColumns.x.quantitative && [
             {
                 name: DataNames.QuantitativeData,
@@ -58,6 +60,9 @@ export function bucketed(context: SpecContext, namespace: BarChartNameSpace, sou
             :
             getQualitative(context)
     };
+    if (columns.x.type === 'date') {
+        data.transform = dateTransforms(columns.x).concat(data.transform);
+    }
     return data;
 }
 

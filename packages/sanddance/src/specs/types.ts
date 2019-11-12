@@ -326,6 +326,18 @@ export interface SpecLanguage {
      * Label for z scale proportion slider.
      */
     zScaleProportion: string;
+
+    dateBinMillenium: string;
+    dateBinCentury: string;
+    dateBinDecade: string;
+    dateBinYear: string;
+    dateBinQuarter: string;
+    dateBinMonth: string;
+    dateBinWeek: string;
+    dateBinDay: string;
+    dateBinHour: string;
+    dateBinMinute: string;
+    dateBinSecond: string;
 }
 
 export interface SignalValues {

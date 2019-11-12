@@ -34,6 +34,17 @@ export const FieldNames = {
     TreemapStackX1: '__SandDance__TreemapStackX1',
     TreemapStackY0: '__SandDance__TreemapStackY0',
     TreemapStackY1: '__SandDance__TreemapStackY1',
+    DateBinMillenium: '__SandDance__MilleniumBin',
+    DateBinCentury: '__SandDance__CenturyBin',
+    DateBinDecade: '__SandDance__DecadeBin',
+    DateBinYear: '__SandDance__YearBin',
+    DateBinQuarter: '__SandDance__QuarterBin',
+    DateBinMonth: '__SandDance__MonthBin',
+    DateBinWeek: '__SandDance__WeekBin',
+    DateBinDay: '__SandDance__DayBin',
+    DateBinHour: '__SandDance__HourBin',
+    DateBinMinute: '__SandDance__MinuteBin',
+    DateBinSecond: '__SandDance__SecondBin'
 };
 
 export const DataNames = {
@@ -44,7 +55,8 @@ export const DataNames = {
     Legend: 'LegendData',
     FacetGroupCell: 'FacetGroupCellData',
     FacetCellTitles: 'FacetCellTitlesData',
-    QuantitativeData: 'QuantitativeData'
+    QuantitativeData: 'QuantitativeData',
+    DateBins: 'DateBins_'
 };
 
 export const ScaleNames = {
@@ -77,7 +89,8 @@ export const SignalNames = {
     YDomain: 'RoleY_DomainSignal',
     YGridSize: 'Chart_YGridSize',
     ZHeight: 'RoleZ_HeightSignal',
-    ZProportion: 'RoleZ_ProportionSignal'
+    ZProportion: 'RoleZ_ProportionSignal',
+    DateBin: 'DateBin_'
 };
 
 export const BarChartScaleNames = {

@@ -56,7 +56,18 @@ export const defaultViewerOptions: ViewerOptions = {
         xAxisTextAngleSignal: 'X axis text angle',
         yAxisTextAngleSignal: 'Y axis text angle',
         zScaleProportion: 'Z scale proportion to Y',
-        selectionCount: count => `${count} items selected`
+        selectionCount: count => `${count} items selected`,
+        dateBinCentury: 'Century',
+        dateBinDay: 'Day',
+        dateBinDecade: 'Decade',
+        dateBinHour: 'Hour',
+        dateBinMillenium: 'Millenium',
+        dateBinMinute: 'Minute',
+        dateBinMonth: 'Month',
+        dateBinQuarter: 'Quarter',
+        dateBinSecond: 'Second',
+        dateBinWeek: 'Week',
+        dateBinYear: 'Year'
     },
     maxLegends: 19, //20 would be "other"
     onError: (errors) => {

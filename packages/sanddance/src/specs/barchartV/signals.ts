@@ -7,6 +7,7 @@ import { facetSignals } from '../facet';
 import { ScaleNames, SignalNames } from '../constants';
 import { Signal } from 'vega-typings';
 import { SpecContext } from '../types';
+import { dateSignals } from '../date';
 
 export default function (context: SpecContext): Signal[] {
     const { specColumns, specViewOptions } = context;
@@ -43,7 +44,8 @@ export default function (context: SpecContext): Signal[] {
             colorBinCountSignal(context),
             colorReverseSignal(context)
         ],
-        specColumns.facet && facetSignals(context)
+        specColumns.facet && facetSignals(context),
+        specColumns.x.type === 'date' && dateSignals(context, specColumns.x)
     );
     return signals;
 }
