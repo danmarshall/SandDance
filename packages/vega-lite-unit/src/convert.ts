@@ -28,7 +28,8 @@ export function unitize(inputSpec: VegaLite.TopLevelSpec, quantitativeX: boolean
         { name: "child_height", value: "height" },
         { name: "bx", update: "bandwidth('x')" },
         { name: "cellcount", update: "ceil(sqrt(maxcount[1]*(bx/child_height)))" },
-        { name: "marksize", update: "0.9*(bx/(cellcount-1))" }
+        { name: "gap", update: "min(0.1*(bx/(cellcount-1)),1)" },
+        { name: "marksize", update: "bx/cellcount-gap" }
     ]);
 
     const data0 = vegaSpec.data[0];

@@ -236,8 +236,12 @@
       "update": "ceil(sqrt(maxcount[1]*(bx/child_height)))"
     },
     {
+      "name": "gap",
+      "update": "min(0.1*(bx/(cellcount-1)),1)"
+    },
+    {
       "name": "marksize",
-      "update": "0.9*(bx/(cellcount-1))"
+      "update": "bx/cellcount-gap"
     }
   ]
 }
