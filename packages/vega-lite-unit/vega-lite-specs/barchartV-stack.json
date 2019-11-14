@@ -1,0 +1,27 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+    "data": {
+        "url": "https://gist.githubusercontent.com/stevendrucker/148b70e89808fc13daed45c925f62b0e/raw/21b6e23161032aa0fff13e1f5fd57b841197a041/titanicmaster.txt",
+        "format": {
+            "type": "tsv"
+        }
+    },
+    "height": 500,
+    "width": 500,
+    "mark": "bar",
+    "encoding": {
+        "x": {
+            "field": "Gender",
+            "type": "nominal"
+        },
+        "y": {
+            "field": "Survived",
+            "type": "quantitative",
+            "aggregate": "count"
+        },
+        "color": {
+            "field": "Class",
+            "type": "nominal"
+        }
+    }
+}
