@@ -20,6 +20,17 @@ export function unitize(inputSpec: VegaLite.TopLevelSpec, quantitativeX: boolean
     const output = VegaLite.compile(inputSpec);
 
     const vegaSpec = output.spec as Vega.Spec;
+
+    //add signals
+    vegaSpec.signals = vegaSpec.signals || [];
+    vegaSpec.signals.push.apply(vegaSpec.signals, [
+        { name: "child_width", value: "width" },
+        { name: "child_height", value: "height" },
+        { name: "bx", update: "bandwidth('x')" },
+        { name: "cellcount", update: "ceil(sqrt(maxcount[1]*(bx/child_height)))" },
+        { name: "marksize", update: "0.9*(bx/(cellcount-1))" }
+    ]);
+
     const data0 = vegaSpec.data[0];
 
     //add identifier preceding aggregate

@@ -178,5 +178,27 @@
       "symbolType": "square",
       "title": "Class"
     }
+  ],
+  "signals": [
+    {
+      "name": "child_width",
+      "value": "width"
+    },
+    {
+      "name": "child_height",
+      "value": "height"
+    },
+    {
+      "name": "bx",
+      "update": "bandwidth('x')"
+    },
+    {
+      "name": "cellcount",
+      "update": "ceil(sqrt(maxcount[1]*(bx/child_height)))"
+    },
+    {
+      "name": "marksize",
+      "update": "0.9*(bx/(cellcount-1))"
+    }
   ]
 }
