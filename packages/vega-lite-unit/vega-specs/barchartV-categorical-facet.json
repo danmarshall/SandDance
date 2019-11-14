@@ -29,6 +29,10 @@
           "maxbins": 30
         },
         {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
           "type": "aggregate",
           "groupby": [
             "Class",

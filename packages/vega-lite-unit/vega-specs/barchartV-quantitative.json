@@ -32,6 +32,10 @@
           "maxbins": 20
         },
         {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
           "type": "aggregate",
           "groupby": [
             "bin_maxbins_20_Age",
