@@ -10,6 +10,14 @@
     "width": 300,
     "mark": "bar",
     "encoding": {
+        "facet": {
+            "field": "TicketCost",
+            "type": "quantitative",
+            "bin": {
+                "maxbins": 30
+            },
+            "columns": 10
+        },
         "x": {
             "field": "Class",
             "type": "nominal"

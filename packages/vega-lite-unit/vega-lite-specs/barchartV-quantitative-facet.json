@@ -10,6 +10,10 @@
     "width": 300,
     "mark": "bar",
     "encoding": {
+        "facet": {
+            "field": "Joined",
+            "type": "nominal"
+        },
         "x": {
             "field": "Age",
             "type": "quantitative",
