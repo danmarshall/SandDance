@@ -11,6 +11,10 @@
       },
       "transform": [
         {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
           "type": "extent",
           "field": "TicketCost",
           "signal": "bin_maxbins_30_TicketCost_extent"
@@ -27,10 +31,6 @@
             "signal": "bin_maxbins_30_TicketCost_extent"
           },
           "maxbins": 30
-        },
-        {
-          "type": "identifier",
-          "as": "id"
         },
         {
           "type": "aggregate",

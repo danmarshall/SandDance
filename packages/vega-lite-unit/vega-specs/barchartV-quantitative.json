@@ -14,6 +14,10 @@
       },
       "transform": [
         {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
           "type": "extent",
           "field": "Age",
           "signal": "bin_maxbins_20_Age_extent"
@@ -30,10 +34,6 @@
             "signal": "bin_maxbins_20_Age_extent"
           },
           "maxbins": 20
-        },
-        {
-          "type": "identifier",
-          "as": "id"
         },
         {
           "type": "aggregate",
