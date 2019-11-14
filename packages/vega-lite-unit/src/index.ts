@@ -1,7 +1,10 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 import * as fs from 'fs';
 import * as path from 'path';
-import { unitize, UnitStyle } from './convert';
 import * as VegaLite from 'vega-lite';
+import { Spec } from 'vega-typings/types';
+import { unitize, unitizeFaceted, UnitStyle } from './convert';
 
 const inputBase = './vega-lite-specs';
 const outputBase = './vega-specs';
@@ -28,7 +31,14 @@ filenames.forEach(filename => {
         } else {
             unitStyle = 'square';
         }
-        const vegaSpec = unitize(vegaLiteSpec, quantitativeX, unitStyle);
+
+        let vegaSpec: Spec;
+        if (filename.indexOf('-facet') > 0) {
+            vegaSpec = unitizeFaceted(vegaLiteSpec, quantitativeX, unitStyle);
+        } else {
+            vegaSpec = unitize(vegaLiteSpec, quantitativeX, unitStyle);
+        }
+
         fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(vegaSpec, null, 2), 'utf8');
     }
 });

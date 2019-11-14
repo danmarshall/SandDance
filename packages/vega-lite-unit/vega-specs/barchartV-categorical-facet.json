@@ -11,10 +11,6 @@
       },
       "transform": [
         {
-          "type": "identifier",
-          "as": "id"
-        },
-        {
           "type": "extent",
           "field": "TicketCost",
           "signal": "bin_maxbins_30_TicketCost_extent"
@@ -33,7 +29,7 @@
           "maxbins": 30
         },
         {
-          "type": "window",
+          "type": "aggregate",
           "groupby": [
             "Class",
             "bin_maxbins_30_TicketCost",
@@ -42,27 +38,12 @@
           "ops": [
             "count"
           ],
-          "sort": {
-            "field": [
-              "Class",
-              "id"
-            ],
-            "order": [
-              "descending",
-              "ascending"
-            ]
-          },
           "fields": [
-            "id"
+            null
           ],
           "as": [
             "__count"
           ]
-        },
-        {
-          "type": "extent",
-          "field": "__count",
-          "signal": "maxcount"
         }
       ]
     },

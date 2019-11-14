@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
 
@@ -6,6 +8,12 @@ export type UnitStyle = 'square' | 'treemap' | 'normalize';
 interface TransformItem<T extends Vega.Transforms> {
     transform: T;
     i: number;
+}
+
+export function unitizeFaceted(inputSpec: VegaLite.TopLevelSpec, quantitativeX: boolean, unitStyle: UnitStyle) {
+    const output = VegaLite.compile(inputSpec);
+    const vegaSpec = output.spec as Vega.Spec;
+    return vegaSpec;
 }
 
 export function unitize(inputSpec: VegaLite.TopLevelSpec, quantitativeX: boolean, unitStyle: UnitStyle) {

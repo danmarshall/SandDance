@@ -11,10 +11,6 @@
       },
       "transform": [
         {
-          "type": "identifier",
-          "as": "id"
-        },
-        {
           "type": "extent",
           "field": "Age",
           "signal": "child_bin_maxbins_20_Age_extent"
@@ -33,7 +29,7 @@
           "maxbins": 20
         },
         {
-          "type": "window",
+          "type": "aggregate",
           "groupby": [
             "bin_maxbins_20_Age",
             "bin_maxbins_20_Age_end",
@@ -43,31 +39,38 @@
           "ops": [
             "count"
           ],
-          "sort": {
-            "field": [
-              "Class",
-              "id"
-            ],
-            "order": [
-              "descending",
-              "ascending"
-            ]
-          },
           "fields": [
-            "id"
+            null
           ],
           "as": [
             "__count"
           ]
         },
         {
-          "type": "filter",
-          "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
+          "type": "stack",
+          "groupby": [
+            "bin_maxbins_20_Age",
+            "bin_maxbins_20_Age_end",
+            "Joined"
+          ],
+          "field": "__count",
+          "sort": {
+            "field": [
+              "Class"
+            ],
+            "order": [
+              "descending"
+            ]
+          },
+          "as": [
+            "__count_start",
+            "__count_end"
+          ],
+          "offset": "zero"
         },
         {
-          "type": "extent",
-          "field": "__count",
-          "signal": "maxcount"
+          "type": "filter",
+          "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
         }
       ]
     },
@@ -319,7 +322,10 @@
       "type": "linear",
       "domain": {
         "data": "source_0",
-        "field": "__count"
+        "fields": [
+          "__count_start",
+          "__count_end"
+        ]
       },
       "range": [
         {
