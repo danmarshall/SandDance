@@ -33,7 +33,7 @@
           "maxbins": 30
         },
         {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
             "Class",
             "bin_maxbins_30_TicketCost",
@@ -42,12 +42,27 @@
           "ops": [
             "count"
           ],
+          "sort": {
+            "field": [
+              "Class",
+              "id"
+            ],
+            "order": [
+              "descending",
+              "ascending"
+            ]
+          },
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     },

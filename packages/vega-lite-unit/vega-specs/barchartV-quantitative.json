@@ -36,7 +36,7 @@
           "maxbins": 20
         },
         {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
             "bin_maxbins_20_Age",
             "bin_maxbins_20_Age_end",
@@ -45,37 +45,31 @@
           "ops": [
             "count"
           ],
+          "sort": {
+            "field": [
+              "Class",
+              "id"
+            ],
+            "order": [
+              "descending",
+              "ascending"
+            ]
+          },
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
         },
         {
-          "type": "stack",
-          "groupby": [
-            "bin_maxbins_20_Age",
-            "bin_maxbins_20_Age_end"
-          ],
-          "field": "__count",
-          "sort": {
-            "field": [
-              "Class"
-            ],
-            "order": [
-              "descending"
-            ]
-          },
-          "as": [
-            "__count_start",
-            "__count_end"
-          ],
-          "offset": "zero"
-        },
-        {
           "type": "filter",
           "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     }
@@ -152,10 +146,7 @@
       "type": "linear",
       "domain": {
         "data": "source_0",
-        "fields": [
-          "__count_start",
-          "__count_end"
-        ]
+        "field": "__count"
       },
       "range": [
         {
