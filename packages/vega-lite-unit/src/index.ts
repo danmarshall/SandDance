@@ -11,6 +11,12 @@ const inputBase = './vega-lite-specs';
 const outputBase = './vega-specs';
 
 const filenames = fs.readdirSync(inputBase);
+const manifest = [];
+
+function out(filename: string, outputSpec: Vega.Spec) {
+    manifest.push(filename);
+    fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(outputSpec, null, 2), 'utf8');
+}
 
 filenames.forEach(filename => {
     const json = fs.readFileSync(path.join(inputBase, filename), 'utf8');
@@ -29,9 +35,11 @@ filenames.forEach(filename => {
                 const styles: UnitStyle[] = ['square'];
                 styles.forEach(unitStyle => {
                     unitize(vegaLiteSpec, outputSpec, unitStyle);
-                    fs.writeFileSync(path.join(outputBase, `${unitStyle}-${filename}`), JSON.stringify(outputSpec, null, 2), 'utf8');
+                    out(`${unitStyle}-${filename}`, outputSpec);
                 });
             }
         }
     }
 });
+
+fs.writeFileSync(path.join(outputBase, 'manifest.json'), JSON.stringify({ manifest }, null, 2), 'utf8');
