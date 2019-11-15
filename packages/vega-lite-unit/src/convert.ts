@@ -88,6 +88,22 @@ function addSignals(signals: Vega.Signal[], xScaleName: string) {
     ]);
 }
 
+function addXBandScale(scales: Vega.Scale[], range: Vega.RangeBand) {
+    scales.push({
+        name: "xb",
+        type: "band",
+        domain: {
+            data: "seq",
+            field: "data",
+            sort: true
+        },
+        range,
+        padding: {
+            signal: 'bandPadding'
+        }
+    });
+}
+
 function modifyMark(mark0: Vega.Mark, field: string, offsetAdditionExpression?: string) {
     const { update } = mark0.encode;
 
@@ -109,6 +125,12 @@ function modifyMark(mark0: Vega.Mark, field: string, offsetAdditionExpression?: 
     update.width = update.height = { signal: "marksize" };
     delete update.x2;
     delete update.y2;
+}
+
+function modifyXScale(xScale: Vega.BandScale) {
+    delete xScale.paddingInner;
+    delete xScale.paddingOuter;
+    xScale.padding = { signal: 'bandPadding' };
 }
 
 function modifyYScale(yScale: Vega.LinearScale) {
@@ -149,24 +171,11 @@ export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
         const xScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'x');
         const range = xScale.range as any;
 
-        vegaSpec.scales.push({
-            name: "xb",
-            type: "band",
-            domain: {
-                "data": "seq",
-                "field": "data",
-                "sort": true
-            },
-            range,
-            padding: {
-                signal: 'bandPadding'
-            }
-        });
+        addXBandScale(vegaSpec.scales, range);
+
     } else {
         const xScale = findScaleByName<Vega.BandScale>(vegaSpec.scales, 'x');
-        delete xScale.paddingInner;
-        delete xScale.paddingOuter;
-        xScale.padding = { signal: 'bandPadding' };
+        modifyXScale(xScale);
     }
 
     return vegaSpec;
