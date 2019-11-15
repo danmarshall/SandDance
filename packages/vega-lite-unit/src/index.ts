@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 import * as fs from 'fs';
 import * as path from 'path';
-import { Spec } from 'vega-typings/types';
-import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
+import * as Vega from 'vega-typings';
+import * as VegaLite from 'vega-lite';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
-import { unitize, unitizeFaceted, UnitStyle } from './convert';
+import { unitize, UnitStyle } from './convert';
 
 const inputBase = './vega-lite-specs';
 const outputBase = './vega-specs';
@@ -14,8 +14,7 @@ const filenames = fs.readdirSync(inputBase);
 
 filenames.forEach(filename => {
     const json = fs.readFileSync(path.join(inputBase, filename), 'utf8');
-    let vegaLiteSpec: TopLevelFacetSpec | TopLevelUnitSpec;
-
+    let vegaLiteSpec: TopLevelUnitSpec;
     try {
         vegaLiteSpec = JSON.parse(json);
     }
@@ -23,23 +22,16 @@ filenames.forEach(filename => {
         process.stderr.write(e);
     }
     if (vegaLiteSpec) {
-        const quantitativeX = filename.indexOf('-quantitative') > 0;
-        let unitStyle: UnitStyle;
-        if (filename.indexOf('normalized')) {
-            unitStyle = 'normalize';
-        } else if (filename.indexOf('treemap')) {
-            unitStyle = 'treemap';
-        } else {
-            unitStyle = 'square';
+        const output = VegaLite.compile(vegaLiteSpec);
+        const outputSpec = output.spec as Vega.Spec;
+        switch (vegaLiteSpec.mark) {
+            case 'bar': {
+                const styles: UnitStyle[] = ['square'];
+                styles.forEach(unitStyle => {
+                    unitize(vegaLiteSpec, outputSpec, unitStyle);
+                    fs.writeFileSync(path.join(outputBase, `${unitStyle}-${filename}`), JSON.stringify(outputSpec, null, 2), 'utf8');
+                });
+            }
         }
-
-        let vegaSpec: Spec;
-        if (filename.indexOf('-facet') > 0) {
-            vegaSpec = unitizeFaceted(vegaLiteSpec as TopLevelFacetSpec, unitStyle);
-        } else {
-            vegaSpec = unitize(vegaLiteSpec as TopLevelUnitSpec, unitStyle);
-        }
-
-        fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(vegaSpec, null, 2), 'utf8');
     }
 });
