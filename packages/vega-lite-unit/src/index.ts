@@ -8,13 +8,13 @@ import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
 import { unitize, UnitStyle } from './convert';
 
 const inputBase = './vega-lite-specs';
-const outputBase = './vega-specs';
+const outputBase = '../../docs/tests/specs';
 
 const filenames = fs.readdirSync(inputBase);
-const manifest = [];
+const specs = [];
 
 function out(filename: string, outputSpec: Vega.Spec) {
-    manifest.push(filename);
+    specs.push(filename);
     fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(outputSpec, null, 2), 'utf8');
 }
 
@@ -42,4 +42,4 @@ filenames.forEach(filename => {
     }
 });
 
-fs.writeFileSync(path.join(outputBase, 'manifest.json'), JSON.stringify({ manifest }, null, 2), 'utf8');
+fs.writeFileSync(path.join(outputBase , 'index.js'), `var index = ${JSON.stringify({ specs }, null, 2)};`, 'utf8');

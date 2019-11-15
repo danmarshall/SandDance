@@ -1,0 +1,203 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 300,
+  "height": 300,
+  "style": "cell",
+  "data": [
+    {
+      "name": "source_0",
+      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "format": {
+        "type": "tsv"
+      },
+      "transform": [
+        {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
+          "type": "window",
+          "groupby": [
+            "Class"
+          ],
+          "ops": [
+            "count"
+          ],
+          "fields": [
+            "id"
+          ],
+          "as": [
+            "__count"
+          ]
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
+        }
+      ]
+    }
+  ],
+  "marks": [
+    {
+      "name": "marks",
+      "type": "rect",
+      "style": [
+        "bar"
+      ],
+      "from": {
+        "data": "source_0"
+      },
+      "encode": {
+        "update": {
+          "fill": {
+            "scale": "color",
+            "field": "Class"
+          },
+          "x": {
+            "scale": "x",
+            "field": "Class",
+            "offset": {
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.25 * bandWidth * bandPadding)"
+            }
+          },
+          "width": {
+            "signal": "marksize"
+          },
+          "y": {
+            "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+          },
+          "height": {
+            "signal": "marksize"
+          }
+        }
+      }
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "band",
+      "domain": {
+        "data": "source_0",
+        "field": "Class",
+        "sort": true
+      },
+      "range": [
+        0,
+        {
+          "signal": "width"
+        }
+      ],
+      "padding": {
+        "signal": "bandPadding"
+      }
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "data": "source_0",
+        "field": "__count"
+      },
+      "range": [
+        {
+          "signal": "height"
+        },
+        0
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {
+        "data": "source_0",
+        "field": "Class",
+        "sort": true
+      },
+      "range": "category"
+    }
+  ],
+  "axes": [
+    {
+      "scale": "y",
+      "orient": "left",
+      "gridScale": "x",
+      "grid": true,
+      "tickCount": {
+        "signal": "ceil(height/40)"
+      },
+      "domain": false,
+      "labels": false,
+      "maxExtent": 0,
+      "minExtent": 0,
+      "ticks": false,
+      "zindex": 0
+    },
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "grid": false,
+      "title": "Class",
+      "labelAlign": "right",
+      "labelAngle": 270,
+      "labelBaseline": "middle",
+      "zindex": 0
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "grid": false,
+      "title": "Count of Records",
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(height/40)"
+      },
+      "zindex": 0
+    }
+  ],
+  "legends": [
+    {
+      "fill": "color",
+      "gradientLength": {
+        "signal": "clamp(height, 64, 200)"
+      },
+      "symbolType": "square",
+      "title": "Class"
+    }
+  ],
+  "signals": [
+    {
+      "name": "child_width",
+      "update": "width"
+    },
+    {
+      "name": "child_height",
+      "update": "height"
+    },
+    {
+      "name": "bandWidth",
+      "update": "bandwidth('x')"
+    },
+    {
+      "name": "bandPadding",
+      "value": 0.1
+    },
+    {
+      "name": "cellcount",
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+    },
+    {
+      "name": "gap",
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
+    },
+    {
+      "name": "marksize",
+      "update": "bandWidth/cellcount-gap"
+    }
+  ]
+}

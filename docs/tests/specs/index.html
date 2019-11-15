@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Vega specs</title>
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+        }
+    </style>
+
+    <!--<script src="https://unpkg.com/vega@^5.7/build/vega.js" charset="utf-8"></script>-->
+    <script src="../../external/vega/5.7/vega.js"></script>
+
+    <script src="index.js"></script>
+</head>
+
+<body>
+
+    <script>
+        const specs = [];
+        function addSpec(spec) {
+            specs.push(spec);
+            if (specs.length === index.specs.length) {
+                specs.sort((a, b) => a.filename.localeCompare(b.filename));
+                view();
+            }
+        }
+        index.specs.forEach(filename => {
+            fetch(filename).then(response => {
+                response.json().then(spec => addSpec({ filename, spec }));
+            });
+        });
+        function view() {
+            specs.forEach(s => {
+                const div = document.createElement('div');
+                document.body.appendChild(div);
+                s.spec.data[0].url = s.spec.data[0].url.replace('../../../docs', '');
+                const runtime = vega.parse(s.spec);
+                new vega.View(runtime).initialize(div).renderer('canvas').run();
+                const hr = document.createElement('hr');
+                document.body.appendChild(hr);
+            });
+        }
+    </script>
+
+</body>
+
+</html>
