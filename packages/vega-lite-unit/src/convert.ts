@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
-import { Data, Signal } from 'vega-typings';
+import { Data, Mark, Signal } from 'vega-typings';
 import { StandardType } from 'vega-lite/build/src/type';
 import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
@@ -75,6 +75,29 @@ function addSignals(signals: Signal[], xScaleName: string) {
     ]);
 }
 
+function modifyMark(mark0: Mark, field: string, offsetAdditionExpression?: string) {
+    const { update } = mark0.encode;
+
+    const expressions = ['bx /cellcount * ( (datum.__count-1) %cellcount)'];
+    if (offsetAdditionExpression) {
+        expressions.push(offsetAdditionExpression);
+    }
+
+    update.x = {
+        scale: "x",
+        field,
+        offset: {
+            signal: expressions.join(' + ')
+        }
+    };
+    update.y = {
+        signal: "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+    };
+    update.width = update.height = { signal: "marksize" };
+    delete update.x2;
+    delete update.y2;
+}
+
 export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const quantitativeX = xEncoding.type === 'quantitative';
@@ -93,26 +116,7 @@ export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
 
     //change mark to xy, hw
     const mark0 = vegaSpec.marks[0];
-    const { update } = mark0.encode;
-
-    const expressions = ['bx /cellcount * ( (datum.__count-1) %cellcount)'];
-    if (quantitativeX) {
-        expressions.push('bx * bandPadding');
-    }
-
-    update.x = {
-        scale: "x",
-        field: transforms.aggregateTransform.groupby[0],
-        offset: {
-            signal: expressions.join(' + ')
-        }
-    };
-    update.y = {
-        signal: "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
-    };
-    update.width = update.height = { signal: "marksize" };
-    delete update.x2;
-    delete update.y2;
+    modifyMark(mark0, transforms.aggregateTransform.groupby[0], quantitativeX && 'bx * bandPadding');
 
     //change y scale to __count only
     const yScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'y');
