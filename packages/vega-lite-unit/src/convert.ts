@@ -20,6 +20,46 @@ export function unitizeFaceted(inputSpec: TopLevelFacetSpec, unitStyle: UnitStyl
     return vegaSpec;
 }
 
+export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
+    const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
+    const quantitativeX = xEncoding.type === 'quantitative';
+
+    const output = VegaLite.compile(inputSpec);
+    const xScaleName = quantitativeX ? 'xb' : 'x';
+
+    const vegaSpec = output.spec as Vega.Spec;
+
+    vegaSpec.signals = vegaSpec.signals || [];
+    addSignals(vegaSpec.signals, xScaleName);
+
+    const data0 = vegaSpec.data[0];
+    const transforms = convertAggregateToWindow(data0);
+
+    const mark0 = vegaSpec.marks[0];
+    modifyMark(mark0, transforms.aggregateTransform.groupby[0], quantitativeX && 'bx * bandPadding');
+
+    const yScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'y');
+    modifyYScale(yScale);
+
+    if (quantitativeX) {
+        const binTransform = findTransformByType<Vega.BinTransform>(data0, 'bin');
+        const binSignalName = binTransform.transform.signal;
+
+        addSequence(vegaSpec.data, binSignalName);
+
+        const xScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'x');
+        const range = xScale.range as any;
+
+        addXBandScale(vegaSpec.scales, range);
+
+    } else {
+        const xScale = findScaleByName<Vega.BandScale>(vegaSpec.scales, 'x');
+        modifyXScale(xScale);
+    }
+
+    return vegaSpec;
+}
+
 function convertAggregateToWindow(data: Vega.Data) {
     //add identifier preceding aggregate
     const idts: Vega.IdentifierTransform = {
@@ -139,46 +179,6 @@ function modifyYScale(yScale: Vega.LinearScale) {
     yDomain.field = "__count";
     const yDomain2 = yScale.domain as Vega.MultiDataRef;
     delete yDomain2.fields;
-}
-
-export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
-    const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
-    const quantitativeX = xEncoding.type === 'quantitative';
-
-    const output = VegaLite.compile(inputSpec);
-    const xScaleName = quantitativeX ? 'xb' : 'x';
-
-    const vegaSpec = output.spec as Vega.Spec;
-
-    vegaSpec.signals = vegaSpec.signals || [];
-    addSignals(vegaSpec.signals, xScaleName);
-
-    const data0 = vegaSpec.data[0];
-    const transforms = convertAggregateToWindow(data0);
-
-    const mark0 = vegaSpec.marks[0];
-    modifyMark(mark0, transforms.aggregateTransform.groupby[0], quantitativeX && 'bx * bandPadding');
-
-    const yScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'y');
-    modifyYScale(yScale);
-
-    if (quantitativeX) {
-        const binTransform = findTransformByType<Vega.BinTransform>(data0, 'bin');
-        const binSignalName = binTransform.transform.signal;
-
-        addSequence(vegaSpec.data, binSignalName);
-
-        const xScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'x');
-        const range = xScale.range as any;
-
-        addXBandScale(vegaSpec.scales, range);
-
-    } else {
-        const xScale = findScaleByName<Vega.BandScale>(vegaSpec.scales, 'x');
-        modifyXScale(xScale);
-    }
-
-    return vegaSpec;
 }
 
 function findTransformByType<T extends Vega.Transforms>(d: Vega.Data, type: 'aggregate' | 'bin' | 'stack') {
