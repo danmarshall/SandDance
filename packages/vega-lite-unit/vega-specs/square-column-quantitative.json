@@ -2,7 +2,7 @@
   "$schema": "https://vega.github.io/schema/vega/v5.json",
   "background": "white",
   "padding": 5,
-  "width": 300,
+  "width": 600,
   "height": 300,
   "style": "cell",
   "data": [
@@ -99,7 +99,7 @@
             "scale": "x",
             "field": "bin_maxbins_20_Age",
             "offset": {
-              "signal": "bx /cellcount * ( (datum.__count-1) %cellcount) + bx * bandPadding"
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.75*bandWidth * bandPadding)"
             }
           },
           "y": {
@@ -160,7 +160,7 @@
       "range": "category"
     },
     {
-      "name": "xb",
+      "name": "quantBand",
       "type": "band",
       "domain": {
         "data": "seq",
@@ -238,8 +238,8 @@
       "update": "height"
     },
     {
-      "name": "bx",
-      "update": "bandwidth('xb')"
+      "name": "bandWidth",
+      "update": "bandwidth('quantBand')"
     },
     {
       "name": "bandPadding",
@@ -247,15 +247,15 @@
     },
     {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bx/child_height)))"
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
     },
     {
       "name": "gap",
-      "update": "min(0.1*(bx/(cellcount-1)),1)"
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
     },
     {
       "name": "marksize",
-      "update": "bx/cellcount-gap"
+      "update": "bandWidth/cellcount-gap"
     }
   ]
 }

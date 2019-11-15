@@ -57,19 +57,19 @@
             "field": "Class"
           },
           "x": {
-            "scale": "x",
-            "field": "Gender",
-            "offset": {
-              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.25 * bandWidth * bandPadding)"
-            }
-          },
-          "width": {
-            "signal": "marksize"
+            "signal": "scale('x', floor((datum.__count-1)/cellcount) * cellcount)"
           },
           "y": {
-            "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+            "scale": "y",
+            "field": "Gender",
+            "offset": {
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
+            }
           },
           "height": {
+            "signal": "marksize"
+          },
+          "width": {
             "signal": "marksize"
           }
         }
@@ -79,6 +79,22 @@
   "scales": [
     {
       "name": "x",
+      "type": "linear",
+      "domain": {
+        "data": "source_0",
+        "field": "__count"
+      },
+      "range": [
+        0,
+        {
+          "signal": "width"
+        }
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "y",
       "type": "band",
       "domain": {
         "data": "source_0",
@@ -88,28 +104,12 @@
       "range": [
         0,
         {
-          "signal": "width"
+          "signal": "height"
         }
       ],
       "padding": {
         "signal": "bandPadding"
       }
-    },
-    {
-      "name": "y",
-      "type": "linear",
-      "domain": {
-        "data": "source_0",
-        "field": "__count"
-      },
-      "range": [
-        {
-          "signal": "height"
-        },
-        0
-      ],
-      "nice": true,
-      "zero": true
     },
     {
       "name": "color",
@@ -124,12 +124,12 @@
   ],
   "axes": [
     {
-      "scale": "y",
-      "orient": "left",
-      "gridScale": "x",
+      "scale": "x",
+      "orient": "bottom",
+      "gridScale": "y",
       "grid": true,
       "tickCount": {
-        "signal": "ceil(height/40)"
+        "signal": "ceil(width/40)"
       },
       "domain": false,
       "labels": false,
@@ -142,21 +142,19 @@
       "scale": "x",
       "orient": "bottom",
       "grid": false,
-      "title": "Gender",
-      "labelAlign": "right",
-      "labelAngle": 270,
-      "labelBaseline": "middle",
+      "title": "Count of Records",
+      "labelFlush": true,
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(width/40)"
+      },
       "zindex": 0
     },
     {
       "scale": "y",
       "orient": "left",
       "grid": false,
-      "title": "Count of Records",
-      "labelOverlap": true,
-      "tickCount": {
-        "signal": "ceil(height/40)"
-      },
+      "title": "Gender",
       "zindex": 0
     }
   ],
@@ -181,7 +179,7 @@
     },
     {
       "name": "bandWidth",
-      "update": "bandwidth('x')"
+      "update": "bandwidth('y')"
     },
     {
       "name": "bandPadding",
@@ -189,7 +187,7 @@
     },
     {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_width)))"
     },
     {
       "name": "gap",

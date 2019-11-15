@@ -60,7 +60,7 @@
             "scale": "x",
             "field": "Class",
             "offset": {
-              "signal": "bx /cellcount * ( (datum.__count-1) %cellcount)"
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.25 * bandWidth * bandPadding)"
             }
           },
           "width": {
@@ -180,7 +180,7 @@
       "update": "height"
     },
     {
-      "name": "bx",
+      "name": "bandWidth",
       "update": "bandwidth('x')"
     },
     {
@@ -189,15 +189,15 @@
     },
     {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bx/child_height)))"
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
     },
     {
       "name": "gap",
-      "update": "min(0.1*(bx/(cellcount-1)),1)"
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
     },
     {
       "name": "marksize",
-      "update": "bx/cellcount-gap"
+      "update": "bandWidth/cellcount-gap"
     }
   ]
 }

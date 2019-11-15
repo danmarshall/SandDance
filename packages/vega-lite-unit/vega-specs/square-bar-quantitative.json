@@ -2,13 +2,13 @@
   "$schema": "https://vega.github.io/schema/vega/v5.json",
   "background": "white",
   "padding": 5,
-  "width": 500,
-  "height": 500,
+  "width": 300,
+  "height": 600,
   "style": "cell",
   "data": [
     {
       "name": "source_0",
-      "url": "https://gist.githubusercontent.com/stevendrucker/148b70e89808fc13daed45c925f62b0e/raw/21b6e23161032aa0fff13e1f5fd57b841197a041/titanicmaster.txt",
+      "url": "../../../docs/sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
@@ -18,9 +18,27 @@
           "as": "id"
         },
         {
+          "type": "extent",
+          "field": "Age",
+          "signal": "bin_maxbins_20_Age_extent"
+        },
+        {
+          "type": "bin",
+          "field": "Age",
+          "as": [
+            "bin_maxbins_20_Age",
+            "bin_maxbins_20_Age_end"
+          ],
+          "signal": "bin_maxbins_20_Age_bins",
+          "extent": {
+            "signal": "bin_maxbins_20_Age_extent"
+          },
+          "maxbins": 20
+        },
+        {
           "type": "window",
           "groupby": [
-            "Gender"
+            "bin_maxbins_20_Age"
           ],
           "ops": [
             "count"
@@ -33,9 +51,30 @@
           ]
         },
         {
+          "type": "filter",
+          "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
+        },
+        {
           "type": "extent",
           "field": "__count",
           "signal": "maxcount"
+        }
+      ]
+    },
+    {
+      "name": "seq",
+      "transform": [
+        {
+          "type": "sequence",
+          "start": {
+            "signal": "bin_maxbins_20_Age_bins.start"
+          },
+          "stop": {
+            "signal": "bin_maxbins_20_Age_bins.stop"
+          },
+          "step": {
+            "signal": "bin_maxbins_20_Age_bins.step"
+          }
         }
       ]
     }
@@ -57,19 +96,19 @@
             "field": "Class"
           },
           "x": {
-            "scale": "x",
-            "field": "Gender",
-            "offset": {
-              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.25 * bandWidth * bandPadding)"
-            }
-          },
-          "width": {
-            "signal": "marksize"
+            "signal": "scale('x', floor((datum.__count-1)/cellcount) * cellcount)"
           },
           "y": {
-            "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+            "scale": "y",
+            "field": "bin_maxbins_20_Age",
+            "offset": {
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (-bandWidth - 0.5*bandWidth * bandPadding)"
+            }
           },
           "height": {
+            "signal": "marksize"
+          },
+          "width": {
             "signal": "marksize"
           }
         }
@@ -79,11 +118,10 @@
   "scales": [
     {
       "name": "x",
-      "type": "band",
+      "type": "linear",
       "domain": {
         "data": "source_0",
-        "field": "Gender",
-        "sort": true
+        "field": "__count"
       },
       "range": [
         0,
@@ -91,16 +129,14 @@
           "signal": "width"
         }
       ],
-      "padding": {
-        "signal": "bandPadding"
-      }
+      "nice": true,
+      "zero": true
     },
     {
       "name": "y",
       "type": "linear",
       "domain": {
-        "data": "source_0",
-        "field": "__count"
+        "signal": "[bin_maxbins_20_Age_bins.start, bin_maxbins_20_Age_bins.stop]"
       },
       "range": [
         {
@@ -108,8 +144,10 @@
         },
         0
       ],
-      "nice": true,
-      "zero": true
+      "bins": {
+        "signal": "bin_maxbins_20_Age_bins"
+      },
+      "zero": false
     },
     {
       "name": "color",
@@ -120,16 +158,34 @@
         "sort": true
       },
       "range": "category"
+    },
+    {
+      "name": "quantBand",
+      "type": "band",
+      "domain": {
+        "data": "seq",
+        "field": "data",
+        "sort": true
+      },
+      "range": [
+        {
+          "signal": "height"
+        },
+        0
+      ],
+      "padding": {
+        "signal": "bandPadding"
+      }
     }
   ],
   "axes": [
     {
-      "scale": "y",
-      "orient": "left",
-      "gridScale": "x",
+      "scale": "x",
+      "orient": "bottom",
+      "gridScale": "y",
       "grid": true,
       "tickCount": {
-        "signal": "ceil(height/40)"
+        "signal": "ceil(width/40)"
       },
       "domain": false,
       "labels": false,
@@ -142,20 +198,22 @@
       "scale": "x",
       "orient": "bottom",
       "grid": false,
-      "title": "Gender",
-      "labelAlign": "right",
-      "labelAngle": 270,
-      "labelBaseline": "middle",
+      "title": "Count of Records",
+      "labelFlush": true,
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(width/40)"
+      },
       "zindex": 0
     },
     {
       "scale": "y",
       "orient": "left",
       "grid": false,
-      "title": "Count of Records",
+      "title": "Age (binned)",
       "labelOverlap": true,
       "tickCount": {
-        "signal": "ceil(height/40)"
+        "signal": "ceil(height/10)"
       },
       "zindex": 0
     }
@@ -181,7 +239,7 @@
     },
     {
       "name": "bandWidth",
-      "update": "bandwidth('x')"
+      "update": "bandwidth('quantBand')"
     },
     {
       "name": "bandPadding",
@@ -189,7 +247,7 @@
     },
     {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_width)))"
     },
     {
       "name": "gap",
