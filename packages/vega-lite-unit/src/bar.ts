@@ -12,7 +12,7 @@ interface TransformItem<T extends Vega.Transforms> {
     i: number;
 }
 
-export function unitize(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
+export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
     const facet = inputSpec.encoding.facet;
     if (facet) {
         unitizeFaceted(inputSpec, outputSpec, unitStyle);

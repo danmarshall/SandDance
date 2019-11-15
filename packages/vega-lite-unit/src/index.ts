@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
-import { unitize, UnitStyle } from './convert';
+import { unitizeBar, UnitStyle } from './bar';
 
 const inputBase = './vega-lite-specs';
 const outputBase = '../../docs/tests/specs';
@@ -34,7 +34,7 @@ filenames.forEach(filename => {
             case 'bar': {
                 const styles: UnitStyle[] = ['square'];
                 styles.forEach(unitStyle => {
-                    unitize(vegaLiteSpec, outputSpec, unitStyle);
+                    unitizeBar(vegaLiteSpec, outputSpec, unitStyle);
                     out(`${unitStyle}-${filename}`, outputSpec);
                 });
             }
