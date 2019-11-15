@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 import * as fs from 'fs';
 import * as path from 'path';
-import * as VegaLite from 'vega-lite';
 import { Spec } from 'vega-typings/types';
-import { unitize, unitizeFaceted, UnitStyle } from './convert';
+import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
+import { unitize, unitizeFaceted, UnitStyle } from './convert';
 
 const inputBase = './vega-lite-specs';
 const outputBase = './vega-specs';
@@ -14,7 +14,7 @@ const filenames = fs.readdirSync(inputBase);
 
 filenames.forEach(filename => {
     const json = fs.readFileSync(path.join(inputBase, filename), 'utf8');
-    let vegaLiteSpec: VegaLite.TopLevelSpec | TopLevelUnitSpec;
+    let vegaLiteSpec: TopLevelFacetSpec | TopLevelUnitSpec;
 
     try {
         vegaLiteSpec = JSON.parse(json);
@@ -35,9 +35,9 @@ filenames.forEach(filename => {
 
         let vegaSpec: Spec;
         if (filename.indexOf('-facet') > 0) {
-            vegaSpec = unitizeFaceted(vegaLiteSpec, quantitativeX, unitStyle);
+            vegaSpec = unitizeFaceted(vegaLiteSpec as TopLevelFacetSpec, unitStyle);
         } else {
-            vegaSpec = unitize(vegaLiteSpec as TopLevelUnitSpec, quantitativeX, unitStyle);
+            vegaSpec = unitize(vegaLiteSpec as TopLevelUnitSpec, unitStyle);
         }
 
         fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(vegaSpec, null, 2), 'utf8');

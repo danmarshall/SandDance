@@ -2,8 +2,11 @@
 // Licensed under the MIT license.
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
-
+import { Data } from 'vega-typings';
+import { StandardType } from 'vega-lite/build/src/type';
+import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
+import { TypedFieldDef } from 'vega-lite/build/src/channeldef';
 
 export type UnitStyle = 'square' | 'treemap' | 'normalize';
 
@@ -12,13 +15,58 @@ interface TransformItem<T extends Vega.Transforms> {
     i: number;
 }
 
-export function unitizeFaceted(inputSpec: VegaLite.TopLevelSpec, quantitativeX: boolean, unitStyle: UnitStyle) {
+export function unitizeFaceted(inputSpec: TopLevelFacetSpec, unitStyle: UnitStyle) {
     const output = VegaLite.compile(inputSpec);
     const vegaSpec = output.spec as Vega.Spec;
     return vegaSpec;
 }
 
-export function unitize(inputSpec: TopLevelUnitSpec, quantitativeX: boolean, unitStyle: UnitStyle) {
+export function convertAggregateToWindow(data: Data) {
+    //add identifier preceding aggregate
+    const idts: Vega.IdentifierTransform = {
+        type: 'identifier',
+        as: 'id'
+    };
+    data.transform.unshift(idts);
+
+    const aggregateItem = findTransformByType<Vega.AggregateTransform>(data, 'aggregate') || { transform: null, i: 0 };
+
+    //change aggregate to window
+    const windowTransform: Vega.WindowTransform = {
+        type: 'window',
+
+        //group by facet, then by category / bin
+        groupby: [aggregateItem.transform.groupby[0]],
+
+        ops: ["count"],
+
+        //Is sort necessary?
+        //sort: { "field": ["id"], "order": ["ascending"] },
+
+        fields: ["id"],
+        as: ["__count"]
+    };
+    data.transform[aggregateItem.i] = windowTransform;
+
+    data.transform.push({
+        type: "extent",
+        field: "__count",
+        signal: "maxcount"
+    })
+
+    //remove stack
+    const stackItem = findTransformByType<Vega.StackTransform>(data, 'stack');
+    if (stackItem) {
+        data.transform.splice(stackItem.i, 1);
+    }
+
+    return { aggregateTransform: aggregateItem.transform, windowTransform };
+}
+
+export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
+    const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
+    const quantitativeX = xEncoding.type === 'quantitative';
+
     const output = VegaLite.compile(inputSpec);
     const xScaleName = quantitativeX ? 'xb' : 'x';
 
@@ -37,44 +85,7 @@ export function unitize(inputSpec: TopLevelUnitSpec, quantitativeX: boolean, uni
     ]);
 
     const data0 = vegaSpec.data[0];
-
-    //add identifier preceding aggregate
-    const idts: Vega.IdentifierTransform = {
-        type: 'identifier',
-        as: 'id'
-    };
-    data0.transform.unshift(idts);
-
-    const aggregateItem = findTransformByType<Vega.AggregateTransform>(data0, 'aggregate') || { transform: null, i: 0 };
-
-    //change aggregate to window
-    const windowTransform: Vega.WindowTransform = {
-        type: 'window',
-
-        //group by facet, then by category / bin
-        groupby: [aggregateItem.transform.groupby[0]],
-
-        ops: ["count"],
-
-        //Is sort necessary?
-        //sort: { "field": ["id"], "order": ["ascending"] },
-
-        fields: ["id"],
-        as: ["__count"]
-    };
-    data0.transform[aggregateItem.i] = windowTransform;
-
-    data0.transform.push({
-        type: "extent",
-        field: "__count",
-        signal: "maxcount"
-    })
-
-    //remove stack
-    const stackItem = findTransformByType<Vega.StackTransform>(data0, 'stack');
-    if (stackItem) {
-        data0.transform.splice(stackItem.i, 1);
-    }
+    const transforms = convertAggregateToWindow(data0);
 
     //change mark to xy, hw
     const mark0 = vegaSpec.marks[0];
@@ -87,7 +98,7 @@ export function unitize(inputSpec: TopLevelUnitSpec, quantitativeX: boolean, uni
 
     update.x = {
         scale: "x",
-        field: aggregateItem.transform.groupby[0],
+        field: transforms.aggregateTransform.groupby[0],
         offset: {
             signal: expressions.join(' + ')
         }
