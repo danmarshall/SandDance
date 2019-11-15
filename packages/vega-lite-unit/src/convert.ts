@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
-import { Data } from 'vega-typings';
+import { Data, Signal } from 'vega-typings';
 import { StandardType } from 'vega-lite/build/src/type';
 import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
@@ -21,7 +21,7 @@ export function unitizeFaceted(inputSpec: TopLevelFacetSpec, unitStyle: UnitStyl
     return vegaSpec;
 }
 
-export function convertAggregateToWindow(data: Data) {
+function convertAggregateToWindow(data: Data) {
     //add identifier preceding aggregate
     const idts: Vega.IdentifierTransform = {
         type: 'identifier',
@@ -63,6 +63,18 @@ export function convertAggregateToWindow(data: Data) {
     return { aggregateTransform: aggregateItem.transform, windowTransform };
 }
 
+function addSignals(signals: Signal[], xScaleName: string) {
+    signals.push.apply(signals, [
+        { name: "child_width", update: "width" },
+        { name: "child_height", update: "height" },
+        { name: "bx", update: `bandwidth('${xScaleName}')` },
+        { name: 'bandPadding', value: 0.1 },
+        { name: "cellcount", update: "ceil(sqrt(maxcount[1]*(bx/child_height)))" },
+        { name: "gap", update: "min(0.1*(bx/(cellcount-1)),1)" },
+        { name: "marksize", update: "bx/cellcount-gap" }
+    ]);
+}
+
 export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const quantitativeX = xEncoding.type === 'quantitative';
@@ -74,15 +86,7 @@ export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
 
     //add signals
     vegaSpec.signals = vegaSpec.signals || [];
-    vegaSpec.signals.push.apply(vegaSpec.signals, [
-        { name: "child_width", update: "width" },
-        { name: "child_height", update: "height" },
-        { name: "bx", update: `bandwidth('${xScaleName}')` },
-        { name: 'bandPadding', value: 0.1 },
-        { name: "cellcount", update: "ceil(sqrt(maxcount[1]*(bx/child_height)))" },
-        { name: "gap", update: "min(0.1*(bx/(cellcount-1)),1)" },
-        { name: "marksize", update: "bx/cellcount-gap" }
-    ]);
+    addSignals(vegaSpec.signals, xScaleName);
 
     const data0 = vegaSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
