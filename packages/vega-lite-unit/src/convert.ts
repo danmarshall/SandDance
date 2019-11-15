@@ -26,36 +26,64 @@ function unitizeFaceted(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unit
 
 function unitizeBasic(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
-    const quantitativeX = xEncoding.type === 'quantitative';
+    const yEncoding = inputSpec.encoding.y as TypedFieldDef<string, StandardType>;
+    let bandEncoding: TypedFieldDef<string, StandardType>;
+    let isBar = false;
+    let quantitativeBand: boolean;
+    let bandDim: string;
+    let countDim: string;
+    let countSize: string;
 
-    const xScaleName = quantitativeX ? 'xb' : 'x';
+    if (xEncoding.aggregate) {
+        isBar = true;
+        bandDim = 'y';
+        countDim = 'x';
+        countSize = 'child_width';
+        bandEncoding = yEncoding;
+    } else {
+        isBar = false;
+        bandDim = 'x';
+        countDim = 'y';
+        countSize = 'child_height';
+        bandEncoding = xEncoding;
+    }
+
+    quantitativeBand = bandEncoding.type === 'quantitative';
+
+    const bandScaleName = quantitativeBand ? 'quantBand' : bandDim;
 
     outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, xScaleName);
+    addSignals(outputSpec.signals, bandScaleName, countSize);
 
     const data0 = outputSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
 
+    const sss = quantitativeBand
+        ?
+        isBar ? '(-bandWidth - 0.5*bandWidth * bandPadding)' : '(0.75*bandWidth * bandPadding)'
+        :
+        isBar ? '' : '(0.25 * bandWidth * bandPadding)';
+
     const mark0 = outputSpec.marks[0];
-    modifyMark(mark0, transforms.aggregateTransform.groupby[0], quantitativeX && 'bx * bandPadding');
+    modifyMark(mark0, !isBar, bandDim, countDim, bandDim, countDim, transforms.aggregateTransform.groupby[0], sss);
 
-    const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, 'y');
-    modifyYScale(yScale);
+    const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, countDim);
+    modifyCountScale(yScale);
 
-    if (quantitativeX) {
+    if (quantitativeBand) {
         const binTransform = findTransformByType<Vega.BinTransform>(data0, 'bin');
         const binSignalName = binTransform.transform.signal;
 
         addSequence(outputSpec.data, binSignalName);
 
-        const xScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, 'x');
-        const range = xScale.range as any;
+        const bandScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, bandDim);
+        const range = bandScale.range as any;
 
-        addXBandScale(outputSpec.scales, range);
+        addBandScale(outputSpec.scales, 'quantBand', range);
 
     } else {
-        const xScale = findScaleByName<Vega.BandScale>(outputSpec.scales, 'x');
-        modifyXScale(xScale);
+        const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, bandDim);
+        modifyBandScale(bandScale);
     }
 }
 
@@ -115,21 +143,21 @@ function addSequence(data: Vega.Data[], binSignalName: string) {
     });
 }
 
-function addSignals(signals: Vega.Signal[], xScaleName: string) {
+function addSignals(signals: Vega.Signal[], bandScaleName: string, countSize: string) {
     signals.push.apply(signals, [
         { name: "child_width", update: "width" },
         { name: "child_height", update: "height" },
-        { name: "bx", update: `bandwidth('${xScaleName}')` },
+        { name: "bandWidth", update: `bandwidth('${bandScaleName}')` },
         { name: 'bandPadding', value: 0.1 },
-        { name: "cellcount", update: "ceil(sqrt(maxcount[1]*(bx/child_height)))" },
-        { name: "gap", update: "min(0.1*(bx/(cellcount-1)),1)" },
-        { name: "marksize", update: "bx/cellcount-gap" }
+        { name: "cellcount", update: `ceil(sqrt(maxcount[1]*(bandWidth/${countSize})))` },
+        { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
+        { name: "marksize", update: "bandWidth/cellcount-gap" }
     ]);
 }
 
-function addXBandScale(scales: Vega.Scale[], range: Vega.RangeBand) {
+function addBandScale(scales: Vega.Scale[], name: string, range: Vega.RangeBand) {
     scales.push({
-        name: "xb",
+        name,
         type: "band",
         domain: {
             data: "seq",
@@ -143,41 +171,42 @@ function addXBandScale(scales: Vega.Scale[], range: Vega.RangeBand) {
     });
 }
 
-function modifyMark(mark0: Vega.Mark, field: string, offsetAdditionExpression?: string) {
+function modifyMark(mark0: Vega.Mark, subtractMarksize: boolean, bandDim: string, countDim: string, bandScaleName: string, countScaleName: string, field: string, offsetAdditionExpression?: string) {
     const { update } = mark0.encode;
 
-    const expressions = ['bx /cellcount * ( (datum.__count-1) %cellcount)'];
+    const expressions = ['bandWidth /cellcount * ( (datum.__count-1) %cellcount)'];
     if (offsetAdditionExpression) {
         expressions.push(offsetAdditionExpression);
     }
 
-    update.x = {
-        scale: "x",
+    update[bandDim] = {
+        scale: bandScaleName,
         field,
         offset: {
             signal: expressions.join(' + ')
         }
     };
-    update.y = {
-        signal: "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+    update[countDim] = {
+        signal: `scale('${countScaleName}', floor((datum.__count-1)/cellcount) * cellcount)${subtractMarksize ? '-marksize' : ''}`
     };
+
     update.width = update.height = { signal: "marksize" };
     delete update.x2;
     delete update.y2;
 }
 
-function modifyXScale(xScale: Vega.BandScale) {
-    delete xScale.paddingInner;
-    delete xScale.paddingOuter;
-    xScale.padding = { signal: 'bandPadding' };
+function modifyBandScale(bandScale: Vega.BandScale) {
+    delete bandScale.paddingInner;
+    delete bandScale.paddingOuter;
+    bandScale.padding = { signal: 'bandPadding' };
 }
 
-function modifyYScale(yScale: Vega.LinearScale) {
-    const yDomain = yScale.domain as Vega.DataRef;
+function modifyCountScale(countScale: Vega.LinearScale) {
+    const domain = countScale.domain as Vega.DataRef;
     //change y scale to __count only
-    yDomain.field = "__count";
-    const yDomain2 = yScale.domain as Vega.MultiDataRef;
-    delete yDomain2.fields;
+    domain.field = "__count";
+    const domain2 = countScale.domain as Vega.MultiDataRef;
+    delete domain2.fields;
 }
 
 function findTransformByType<T extends Vega.Transforms>(d: Vega.Data, type: 'aggregate' | 'bin' | 'stack') {
