@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 import * as Vega from 'vega-typings';
 import * as VegaLite from 'vega-lite';
-import { Data, Mark, Signal } from 'vega-typings';
 import { StandardType } from 'vega-lite/build/src/type';
 import { TopLevelFacetSpec } from 'vega-lite/build/src/spec';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
@@ -21,7 +20,7 @@ export function unitizeFaceted(inputSpec: TopLevelFacetSpec, unitStyle: UnitStyl
     return vegaSpec;
 }
 
-function convertAggregateToWindow(data: Data) {
+function convertAggregateToWindow(data: Vega.Data) {
     //add identifier preceding aggregate
     const idts: Vega.IdentifierTransform = {
         type: 'identifier',
@@ -63,7 +62,21 @@ function convertAggregateToWindow(data: Data) {
     return { aggregateTransform: aggregateItem.transform, windowTransform };
 }
 
-function addSignals(signals: Signal[], xScaleName: string) {
+function addSequence(data: Vega.Data[], binSignalName: string) {
+    data.push({
+        name: "seq",
+        transform: [
+            {
+                type: "sequence",
+                start: { signal: `${binSignalName}.start` },
+                stop: { signal: `${binSignalName}.stop` },
+                step: { signal: `${binSignalName}.step` }
+            }
+        ]
+    });
+}
+
+function addSignals(signals: Vega.Signal[], xScaleName: string) {
     signals.push.apply(signals, [
         { name: "child_width", update: "width" },
         { name: "child_height", update: "height" },
@@ -75,7 +88,7 @@ function addSignals(signals: Signal[], xScaleName: string) {
     ]);
 }
 
-function modifyMark(mark0: Mark, field: string, offsetAdditionExpression?: string) {
+function modifyMark(mark0: Vega.Mark, field: string, offsetAdditionExpression?: string) {
     const { update } = mark0.encode;
 
     const expressions = ['bx /cellcount * ( (datum.__count-1) %cellcount)'];
@@ -98,6 +111,14 @@ function modifyMark(mark0: Mark, field: string, offsetAdditionExpression?: strin
     delete update.y2;
 }
 
+function modifyYScale(yScale: Vega.LinearScale) {
+    const yDomain = yScale.domain as Vega.DataRef;
+    //change y scale to __count only
+    yDomain.field = "__count";
+    const yDomain2 = yScale.domain as Vega.MultiDataRef;
+    delete yDomain2.fields;
+}
+
 export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const quantitativeX = xEncoding.type === 'quantitative';
@@ -107,39 +128,23 @@ export function unitize(inputSpec: TopLevelUnitSpec, unitStyle: UnitStyle) {
 
     const vegaSpec = output.spec as Vega.Spec;
 
-    //add signals
     vegaSpec.signals = vegaSpec.signals || [];
     addSignals(vegaSpec.signals, xScaleName);
 
     const data0 = vegaSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
 
-    //change mark to xy, hw
     const mark0 = vegaSpec.marks[0];
     modifyMark(mark0, transforms.aggregateTransform.groupby[0], quantitativeX && 'bx * bandPadding');
 
-    //change y scale to __count only
     const yScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'y');
-    const yDomain = yScale.domain as Vega.DataRef;
-    yDomain.field = "__count";
-    const yDomain2 = yScale.domain as Vega.MultiDataRef;
-    delete yDomain2.fields;
+    modifyYScale(yScale);
 
     if (quantitativeX) {
         const binTransform = findTransformByType<Vega.BinTransform>(data0, 'bin');
         const binSignalName = binTransform.transform.signal;
 
-        vegaSpec.data.push({
-            name: "seq",
-            transform: [
-                {
-                    type: "sequence",
-                    start: { signal: `${binSignalName}.start` },
-                    stop: { signal: `${binSignalName}.stop` },
-                    step: { signal: `${binSignalName}.step` }
-                }
-            ]
-        });
+        addSequence(vegaSpec.data, binSignalName);
 
         const xScale = findScaleByName<Vega.LinearScale>(vegaSpec.scales, 'x');
         const range = xScale.range as any;
