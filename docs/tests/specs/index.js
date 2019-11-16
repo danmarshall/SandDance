@@ -19,16 +19,15 @@ function view(name, spec) {
 }
 
 function list() {
+    addTag('h1', 'Vega-Lite ➧ Vega ➧ Unit Visualization');
+
     conversions.forEach(conversion => {
         addTag('h2', conversion.src);
 
         const spec = vegaLite.compile(conversion.vegaLiteSpec).spec;
-        console.log(spec);
         view('original from vega lite', spec);
 
-        conversion.downloads.forEach(download => {
-            view(download.src, download.spec);
-        })
+        conversion.downloads.forEach(download => view(download.src, download.spec))
 
         addTag('hr');
     });
