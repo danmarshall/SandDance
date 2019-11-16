@@ -19,6 +19,7 @@ interface BarChartInfo {
     countDim: string;
     countSize: string;
     quantitativeBand?: boolean;
+    bandScaleName?: string;
 }
 
 export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
@@ -43,6 +44,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         };
     }
     info.quantitativeBand = info.bandEncoding.type === 'quantitative';
+    info.bandScaleName = info.quantitativeBand ? 'quantBand' : info.bandDim;
 
     const facet = inputSpec.encoding.facet;
     if (facet) {
@@ -56,24 +58,20 @@ function unitizeFaceted(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputS
 }
 
 function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
-
-
-    const bandScaleName = info.quantitativeBand ? 'quantBand' : info.bandDim;
-
     outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, bandScaleName, info.countSize);
+    addSignals(outputSpec.signals, info.bandScaleName, info.countSize);
 
     const data0 = outputSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
 
-    const sss = info.quantitativeBand
+    const positionCorrection = info.quantitativeBand
         ?
-        info.isBar ? '(-bandWidth - 0.5*bandWidth * bandPadding)' : '(0.75*bandWidth * bandPadding)'
+        info.isBar ? '(-bandWidth - 0.5 * bandWidth * bandPadding)' : '(0.75 * bandWidth * bandPadding)'
         :
         info.isBar ? '' : '(0.25 * bandWidth * bandPadding)';
 
     const mark0 = outputSpec.marks[0];
-    modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, transforms.aggregateTransform.groupby[0], sss);
+    modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, transforms.aggregateTransform.groupby[0], positionCorrection);
 
     const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
     modifyCountScale(yScale);
