@@ -1,4 +1,4 @@
-function addTag(tagName, innerText) {
+function addElement(tagName, innerText) {
     const el = document.createElement(tagName);
     if (innerText) {
         el.innerText = innerText;
@@ -8,8 +8,8 @@ function addTag(tagName, innerText) {
 }
 
 function view(name, spec) {
-    addTag('h3', name);
-    const div = addTag('div');
+    addElement('h3', name);
+    const div = addElement('div');
     try {
         const runtime = vega.parse(spec);
         new vega.View(runtime).initialize(div).renderer('canvas').run();
@@ -19,43 +19,42 @@ function view(name, spec) {
 }
 
 function list() {
-    addTag('h1', 'Vega-Lite ➧ Vega ➧ Unit Visualization');
-
+    addElement('h1', 'Vega-Lite ➧ Vega ➧ Unit Visualization');
     conversions.forEach(conversion => {
-        addTag('h2', conversion.src);
-
+        addElement('h2', conversion.src);
         const spec = vegaLite.compile(conversion.vegaLiteSpec).spec;
         view('original from vega lite', spec);
-
         conversion.downloads.forEach(download => view(download.src, download.spec))
-
-        addTag('hr');
+        addElement('hr');
     });
 }
 
+function Tally() {
+    this.goal = 0;
+    this.actual = 0;
+}
+
 const tally = {
-    src: {
-        goal: conversions.length,
-        actual: 0
-    },
-    outputs: {
-        goal: 0,
-        actual: 0
-    }
+    src: new Tally(),
+    outputs: new Tally()
 };
 
 function checkAll() {
     if (tally.src.actual == tally.src.goal && tally.outputs.actual === tally.outputs.goal) {
-        conversions.forEach(conversion => {
-            conversion.downloads.sort((a, b) => a.src.localeCompare(b.src));
-        })
+        conversions.forEach(conversion => conversion.downloads.sort((a, b) => a.src.localeCompare(b.src)));
         list();
     }
+}
+
+const param = document.location.search.substring(1);
+if (param) {
+    conversions = conversions.filter(c => c.src === param);
 }
 
 conversions.sort((a, b) => a.src.localeCompare(b.src));
 
 conversions.forEach(conversion => {
+    tally.src.goal++;
     tally.outputs.goal += conversion.outputs.length;
     fetch(`input/${conversion.src}`).then(response => {
         response.json().then(spec => {
