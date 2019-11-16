@@ -18,6 +18,11 @@ function view(name, spec) {
     }
 }
 
+function addCell(table, title, spec) {
+    const content = `${title}\n${JSON.stringify(spec, null, 2)}`;
+    addElement('pre', content, table);
+}
+
 function list() {
     addElement('h1', 'Vega-Lite ➧ Vega ➧ Unit Visualization');
     conversions.forEach(conversion => {
@@ -26,7 +31,15 @@ function list() {
         a.setAttribute('href', `?${conversion.src}`);
         const spec = vegaLite.compile(conversion.vegaLiteSpec).spec;
         view('original from vega lite', spec);
-        conversion.downloads.forEach(download => view(download.src, download.spec))
+        conversion.downloads.forEach(download => {
+            view(download.src, download.spec);
+            if (urlFilter) {
+                const table = addElement('div');
+                table.setAttribute('class', 'spec-table');
+                addCell(table, 'original', spec);
+                addCell(table, 'converted', download.spec);
+            }
+        })
         addElement('hr');
     });
 }
@@ -48,9 +61,9 @@ function checkAll() {
     }
 }
 
-const param = document.location.search.substring(1);
-if (param) {
-    conversions = conversions.filter(c => c.src === param);
+const urlFilter = document.location.search.substring(1);
+if (urlFilter) {
+    conversions = conversions.filter(c => c.src === urlFilter);
 }
 
 conversions.sort((a, b) => a.src.localeCompare(b.src));
