@@ -1,9 +1,9 @@
-function addElement(tagName, innerText) {
+function addElement(tagName, innerText, parentElement) {
     const el = document.createElement(tagName);
     if (innerText) {
         el.innerText = innerText;
     }
-    document.body.appendChild(el);
+    (parentElement || document.body).appendChild(el);
     return el;
 }
 
@@ -21,7 +21,9 @@ function view(name, spec) {
 function list() {
     addElement('h1', 'Vega-Lite ➧ Vega ➧ Unit Visualization');
     conversions.forEach(conversion => {
-        addElement('h2', conversion.src);
+        const h2 = addElement('h2');
+        const a = addElement('a', conversion.src, h2);
+        a.setAttribute('href', `?${conversion.src}`);
         const spec = vegaLite.compile(conversion.vegaLiteSpec).spec;
         view('original from vega lite', spec);
         conversion.downloads.forEach(download => view(download.src, download.spec))
