@@ -5,11 +5,33 @@
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
       "transform": [
+        {
+          "type": "identifier",
+          "as": "id"
+        },
+        {
+          "type": "extent",
+          "field": "TicketCost",
+          "signal": "bin_maxbins_30_TicketCost_extent"
+        },
+        {
+          "type": "bin",
+          "field": "TicketCost",
+          "as": [
+            "bin_maxbins_30_TicketCost",
+            "bin_maxbins_30_TicketCost_end"
+          ],
+          "signal": "bin_maxbins_30_TicketCost_bins",
+          "extent": {
+            "signal": "bin_maxbins_30_TicketCost_extent"
+          },
+          "maxbins": 30
+        },
         {
           "type": "extent",
           "field": "Age",
@@ -29,48 +51,33 @@
           "maxbins": 20
         },
         {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
+            "TicketCost",
             "bin_maxbins_20_Age",
             "bin_maxbins_20_Age_end",
             "Class",
-            "Joined"
+            "bin_maxbins_30_TicketCost",
+            "bin_maxbins_30_TicketCost_end"
           ],
           "ops": [
             "count"
           ],
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
         },
         {
-          "type": "stack",
-          "groupby": [
-            "bin_maxbins_20_Age",
-            "bin_maxbins_20_Age_end",
-            "Joined"
-          ],
-          "field": "__count",
-          "sort": {
-            "field": [
-              "Class"
-            ],
-            "order": [
-              "descending"
-            ]
-          },
-          "as": [
-            "__count_start",
-            "__count_end"
-          ],
-          "offset": "zero"
-        },
-        {
           "type": "filter",
           "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     },
@@ -81,7 +88,8 @@
         {
           "type": "aggregate",
           "groupby": [
-            "Joined"
+            "bin_maxbins_30_TicketCost",
+            "bin_maxbins_30_TicketCost_end"
           ]
         }
       ]
@@ -92,7 +100,9 @@
         {
           "type": "sequence",
           "start": 0,
-          "stop": 1
+          "stop": {
+            "signal": "ceil(length(data(\"facet_domain\")) / 10)"
+          }
         }
       ]
     },
@@ -103,7 +113,7 @@
           "type": "sequence",
           "start": 0,
           "stop": {
-            "signal": "length(data(\"facet_domain\"))"
+            "signal": "min(length(data(\"facet_domain\")), 10)"
           }
         }
       ]
@@ -122,7 +132,8 @@
   "layout": {
     "padding": 20,
     "bounds": "full",
-    "align": "all"
+    "align": "all",
+    "columns": 10
   },
   "marks": [
     {
@@ -130,7 +141,7 @@
       "type": "group",
       "role": "column-title",
       "title": {
-        "text": "Joined",
+        "text": "TicketCost (binned)",
         "style": "guide-title",
         "offset": 10
       }
@@ -197,7 +208,7 @@
       "type": "group",
       "title": {
         "text": {
-          "signal": "''+parent[\"Joined\"]"
+          "signal": "!isValid(parent[\"bin_maxbins_30_TicketCost\"]) || !isFinite(+parent[\"bin_maxbins_30_TicketCost\"]) ? \"null\" : format(parent[\"bin_maxbins_30_TicketCost\"], \"\") + \" - \" + format(parent[\"bin_maxbins_30_TicketCost_end\"], \"\")"
         },
         "style": "guide-label",
         "frame": "group",
@@ -209,13 +220,14 @@
           "name": "facet",
           "data": "source_0",
           "groupby": [
-            "Joined"
+            "bin_maxbins_30_TicketCost",
+            "bin_maxbins_30_TicketCost_end"
           ]
         }
       },
       "sort": {
         "field": [
-          "datum[\"Joined\"]"
+          "datum[\"bin_maxbins_30_TicketCost\"]"
         ],
         "order": [
           "ascending"

@@ -1,25 +1,17 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "data": {
-        "url": "../../../docs/sample-data/titanicmaster.tsv",
+        "url": "../../../sample-data/titanicmaster.tsv",
         "format": {
             "type": "tsv"
         }
     },
-    "height": 300,
-    "width": 300,
+    "height": 500,
+    "width": 500,
     "mark": "bar",
     "encoding": {
-        "facet": {
-            "field": "TicketCost",
-            "type": "quantitative",
-            "bin": {
-                "maxbins": 30
-            },
-            "columns": 10
-        },
         "y": {
-            "field": "Class",
+            "field": "Gender",
             "type": "nominal"
         },
         "x": {

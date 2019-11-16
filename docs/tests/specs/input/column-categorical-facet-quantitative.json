@@ -1,7 +1,7 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "data": {
-        "url": "../../../docs/sample-data/titanicmaster.tsv",
+        "url": "../../../sample-data/titanicmaster.tsv",
         "format": {
             "type": "tsv"
         }
@@ -11,17 +11,18 @@
     "mark": "bar",
     "encoding": {
         "facet": {
-            "field": "Joined",
+            "field": "TicketCost",
+            "type": "quantitative",
+            "bin": {
+                "maxbins": 30
+            },
+            "columns": 10
+        },
+        "x": {
+            "field": "Class",
             "type": "nominal"
         },
         "y": {
-            "field": "Age",
-            "type": "quantitative",
-            "bin": {
-                "maxbins": 20
-            }
-        },
-        "x": {
             "field": "Survived",
             "type": "quantitative",
             "aggregate": "count"

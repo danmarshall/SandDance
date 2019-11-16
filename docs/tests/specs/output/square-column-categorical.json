@@ -2,13 +2,13 @@
   "$schema": "https://vega.github.io/schema/vega/v5.json",
   "background": "white",
   "padding": 5,
-  "width": 500,
-  "height": 500,
+  "width": 300,
+  "height": 300,
   "style": "cell",
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
@@ -20,7 +20,7 @@
         {
           "type": "window",
           "groupby": [
-            "Gender"
+            "Class"
           ],
           "ops": [
             "count"
@@ -57,19 +57,19 @@
             "field": "Class"
           },
           "x": {
-            "signal": "scale('x', floor((datum.__count-1)/cellcount) * cellcount)"
-          },
-          "y": {
-            "scale": "y",
-            "field": "Gender",
+            "scale": "x",
+            "field": "Class",
             "offset": {
               "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
             }
           },
-          "height": {
+          "width": {
             "signal": "marksize"
           },
-          "width": {
+          "y": {
+            "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+          },
+          "height": {
             "signal": "marksize"
           }
         }
@@ -79,10 +79,11 @@
   "scales": [
     {
       "name": "x",
-      "type": "linear",
+      "type": "band",
       "domain": {
         "data": "source_0",
-        "field": "__count"
+        "field": "Class",
+        "sort": true
       },
       "range": [
         0,
@@ -90,26 +91,25 @@
           "signal": "width"
         }
       ],
-      "nice": true,
-      "zero": true
-    },
-    {
-      "name": "y",
-      "type": "band",
-      "domain": {
-        "data": "source_0",
-        "field": "Gender",
-        "sort": true
-      },
-      "range": [
-        0,
-        {
-          "signal": "height"
-        }
-      ],
       "padding": {
         "signal": "bandPadding"
       }
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "data": "source_0",
+        "field": "__count"
+      },
+      "range": [
+        {
+          "signal": "height"
+        },
+        0
+      ],
+      "nice": true,
+      "zero": true
     },
     {
       "name": "color",
@@ -124,12 +124,12 @@
   ],
   "axes": [
     {
-      "scale": "x",
-      "orient": "bottom",
-      "gridScale": "y",
+      "scale": "y",
+      "orient": "left",
+      "gridScale": "x",
       "grid": true,
       "tickCount": {
-        "signal": "ceil(width/40)"
+        "signal": "ceil(height/40)"
       },
       "domain": false,
       "labels": false,
@@ -142,19 +142,21 @@
       "scale": "x",
       "orient": "bottom",
       "grid": false,
-      "title": "Count of Records",
-      "labelFlush": true,
-      "labelOverlap": true,
-      "tickCount": {
-        "signal": "ceil(width/40)"
-      },
+      "title": "Class",
+      "labelAlign": "right",
+      "labelAngle": 270,
+      "labelBaseline": "middle",
       "zindex": 0
     },
     {
       "scale": "y",
       "orient": "left",
       "grid": false,
-      "title": "Gender",
+      "title": "Count of Records",
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(height/40)"
+      },
       "zindex": 0
     }
   ],
@@ -179,7 +181,7 @@
     },
     {
       "name": "bandWidth",
-      "update": "bandwidth('y')"
+      "update": "bandwidth('x')"
     },
     {
       "name": "bandPadding",
@@ -187,7 +189,7 @@
     },
     {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_width)))"
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
     },
     {
       "name": "gap",

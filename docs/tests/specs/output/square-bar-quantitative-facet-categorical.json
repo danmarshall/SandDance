@@ -5,11 +5,15 @@
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
       "transform": [
+        {
+          "type": "identifier",
+          "as": "id"
+        },
         {
           "type": "extent",
           "field": "Age",
@@ -29,8 +33,9 @@
           "maxbins": 20
         },
         {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
+            "Joined",
             "bin_maxbins_20_Age",
             "bin_maxbins_20_Age_end",
             "Class",
@@ -40,37 +45,20 @@
             "count"
           ],
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
         },
         {
-          "type": "stack",
-          "groupby": [
-            "bin_maxbins_20_Age",
-            "bin_maxbins_20_Age_end",
-            "Joined"
-          ],
-          "field": "__count",
-          "sort": {
-            "field": [
-              "Class"
-            ],
-            "order": [
-              "descending"
-            ]
-          },
-          "as": [
-            "__count_start",
-            "__count_end"
-          ],
-          "offset": "zero"
-        },
-        {
           "type": "filter",
           "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     },
@@ -154,10 +142,10 @@
           "scale": "y",
           "orient": "left",
           "grid": false,
-          "title": "Count of Records",
+          "title": "Age (binned)",
           "labelOverlap": true,
           "tickCount": {
-            "signal": "ceil(child_height/40)"
+            "signal": "ceil(child_height/10)"
           },
           "zindex": 0
         }
@@ -182,11 +170,11 @@
           "scale": "x",
           "orient": "bottom",
           "grid": false,
-          "title": "Age (binned)",
+          "title": "Count of Records",
           "labelFlush": true,
           "labelOverlap": true,
           "tickCount": {
-            "signal": "ceil(child_width/10)"
+            "signal": "ceil(child_width/40)"
           },
           "zindex": 0
         }
@@ -247,47 +235,51 @@
                 "scale": "color",
                 "field": "Class"
               },
-              "x2": [
-                {
-                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
-                  "value": 0
-                },
-                {
-                  "scale": "x",
-                  "field": "bin_maxbins_20_Age",
-                  "offset": 1
-                }
-              ],
-              "x": [
-                {
-                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
-                  "value": 0
-                },
-                {
-                  "scale": "x",
-                  "field": "bin_maxbins_20_Age_end"
-                }
-              ],
-              "y": {
-                "scale": "y",
+              "x": {
+                "scale": "x",
                 "field": "__count_end"
               },
-              "y2": {
-                "scale": "y",
+              "x2": {
+                "scale": "x",
                 "field": "__count_start"
-              }
+              },
+              "y2": [
+                {
+                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
+                  "field": {
+                    "group": "height"
+                  }
+                },
+                {
+                  "scale": "y",
+                  "field": "bin_maxbins_20_Age"
+                }
+              ],
+              "y": [
+                {
+                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
+                  "field": {
+                    "group": "height"
+                  }
+                },
+                {
+                  "scale": "y",
+                  "field": "bin_maxbins_20_Age_end",
+                  "offset": 1
+                }
+              ]
             }
           }
         }
       ],
       "axes": [
         {
-          "scale": "y",
-          "orient": "left",
-          "gridScale": "x",
+          "scale": "x",
+          "orient": "bottom",
+          "gridScale": "y",
           "grid": true,
           "tickCount": {
-            "signal": "ceil(child_height/40)"
+            "signal": "ceil(child_width/40)"
           },
           "domain": false,
           "labels": false,
@@ -304,23 +296,6 @@
       "name": "x",
       "type": "linear",
       "domain": {
-        "signal": "[child_bin_maxbins_20_Age_bins.start, child_bin_maxbins_20_Age_bins.stop]"
-      },
-      "range": [
-        0,
-        {
-          "signal": "child_width"
-        }
-      ],
-      "bins": {
-        "signal": "child_bin_maxbins_20_Age_bins"
-      },
-      "zero": false
-    },
-    {
-      "name": "y",
-      "type": "linear",
-      "domain": {
         "data": "source_0",
         "fields": [
           "__count_start",
@@ -328,13 +303,30 @@
         ]
       },
       "range": [
+        0,
+        {
+          "signal": "child_width"
+        }
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "signal": "[child_bin_maxbins_20_Age_bins.start, child_bin_maxbins_20_Age_bins.stop]"
+      },
+      "range": [
         {
           "signal": "child_height"
         },
         0
       ],
-      "nice": true,
-      "zero": true
+      "bins": {
+        "signal": "child_bin_maxbins_20_Age_bins"
+      },
+      "zero": false
     },
     {
       "name": "color",

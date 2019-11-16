@@ -5,45 +5,36 @@
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
       "transform": [
         {
-          "type": "extent",
-          "field": "TicketCost",
-          "signal": "bin_maxbins_30_TicketCost_extent"
+          "type": "identifier",
+          "as": "id"
         },
         {
-          "type": "bin",
-          "field": "TicketCost",
-          "as": [
-            "bin_maxbins_30_TicketCost",
-            "bin_maxbins_30_TicketCost_end"
-          ],
-          "signal": "bin_maxbins_30_TicketCost_bins",
-          "extent": {
-            "signal": "bin_maxbins_30_TicketCost_extent"
-          },
-          "maxbins": 30
-        },
-        {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
+            "Gender",
             "Class",
-            "bin_maxbins_30_TicketCost",
-            "bin_maxbins_30_TicketCost_end"
+            "Gender"
           ],
           "ops": [
             "count"
           ],
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     },
@@ -54,8 +45,7 @@
         {
           "type": "aggregate",
           "groupby": [
-            "bin_maxbins_30_TicketCost",
-            "bin_maxbins_30_TicketCost_end"
+            "Gender"
           ]
         }
       ]
@@ -66,9 +56,7 @@
         {
           "type": "sequence",
           "start": 0,
-          "stop": {
-            "signal": "ceil(length(data(\"facet_domain\")) / 10)"
-          }
+          "stop": 1
         }
       ]
     },
@@ -79,7 +67,7 @@
           "type": "sequence",
           "start": 0,
           "stop": {
-            "signal": "min(length(data(\"facet_domain\")), 10)"
+            "signal": "length(data(\"facet_domain\"))"
           }
         }
       ]
@@ -98,8 +86,7 @@
   "layout": {
     "padding": 20,
     "bounds": "full",
-    "align": "all",
-    "columns": 10
+    "align": "all"
   },
   "marks": [
     {
@@ -107,7 +94,7 @@
       "type": "group",
       "role": "column-title",
       "title": {
-        "text": "TicketCost (binned)",
+        "text": "Gender",
         "style": "guide-title",
         "offset": 10
       }
@@ -131,7 +118,11 @@
           "scale": "y",
           "orient": "left",
           "grid": false,
-          "title": "Class",
+          "title": "Count of Records",
+          "labelOverlap": true,
+          "tickCount": {
+            "signal": "ceil(child_height/40)"
+          },
           "zindex": 0
         }
       ]
@@ -155,12 +146,10 @@
           "scale": "x",
           "orient": "bottom",
           "grid": false,
-          "title": "Count of Records",
-          "labelFlush": true,
-          "labelOverlap": true,
-          "tickCount": {
-            "signal": "ceil(child_width/40)"
-          },
+          "title": "Class",
+          "labelAlign": "right",
+          "labelAngle": 270,
+          "labelBaseline": "middle",
           "zindex": 0
         }
       ]
@@ -170,7 +159,7 @@
       "type": "group",
       "title": {
         "text": {
-          "signal": "!isValid(parent[\"bin_maxbins_30_TicketCost\"]) || !isFinite(+parent[\"bin_maxbins_30_TicketCost\"]) ? \"null\" : format(parent[\"bin_maxbins_30_TicketCost\"], \"\") + \" - \" + format(parent[\"bin_maxbins_30_TicketCost_end\"], \"\")"
+          "signal": "''+parent[\"Gender\"]"
         },
         "style": "guide-label",
         "frame": "group",
@@ -182,14 +171,13 @@
           "name": "facet",
           "data": "source_0",
           "groupby": [
-            "bin_maxbins_30_TicketCost",
-            "bin_maxbins_30_TicketCost_end"
+            "Gender"
           ]
         }
       },
       "sort": {
         "field": [
-          "datum[\"bin_maxbins_30_TicketCost\"]"
+          "datum[\"Gender\"]"
         ],
         "order": [
           "ascending"
@@ -223,19 +211,19 @@
               },
               "x": {
                 "scale": "x",
-                "field": "__count"
+                "field": "Class"
               },
-              "x2": {
+              "width": {
                 "scale": "x",
-                "value": 0
+                "band": true
               },
               "y": {
                 "scale": "y",
-                "field": "Class"
+                "field": "__count"
               },
-              "height": {
+              "y2": {
                 "scale": "y",
-                "band": true
+                "value": 0
               }
             }
           }
@@ -243,12 +231,12 @@
       ],
       "axes": [
         {
-          "scale": "x",
-          "orient": "bottom",
-          "gridScale": "y",
+          "scale": "y",
+          "orient": "left",
+          "gridScale": "x",
           "grid": true,
           "tickCount": {
-            "signal": "ceil(child_width/40)"
+            "signal": "ceil(child_height/40)"
           },
           "domain": false,
           "labels": false,
@@ -263,22 +251,6 @@
   "scales": [
     {
       "name": "x",
-      "type": "linear",
-      "domain": {
-        "data": "source_0",
-        "field": "__count"
-      },
-      "range": [
-        0,
-        {
-          "signal": "child_width"
-        }
-      ],
-      "nice": true,
-      "zero": true
-    },
-    {
-      "name": "y",
       "type": "band",
       "domain": {
         "data": "source_0",
@@ -288,11 +260,27 @@
       "range": [
         0,
         {
-          "signal": "child_height"
+          "signal": "child_width"
         }
       ],
       "paddingInner": 0.1,
       "paddingOuter": 0.05
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "data": "source_0",
+        "field": "__count"
+      },
+      "range": [
+        {
+          "signal": "child_height"
+        },
+        0
+      ],
+      "nice": true,
+      "zero": true
     },
     {
       "name": "color",

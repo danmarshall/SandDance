@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 import * as Vega from 'vega-typings';
+import { FacetEncodingFieldDef } from 'vega-lite/build/src/spec/facet';
+import { Field, TypedFieldDef } from 'vega-lite/build/src/channeldef';
 import { StandardType } from 'vega-lite/build/src/type';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
-import { TypedFieldDef } from 'vega-lite/build/src/channeldef';
 
 export type UnitStyle = 'square' | 'treemap' | 'normalize';
 
@@ -48,13 +49,17 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     const facet = inputSpec.encoding.facet;
     if (facet) {
-        unitizeFaceted(info, inputSpec, outputSpec, unitStyle);
+        unitizeFaceted(info, inputSpec, outputSpec, unitStyle, facet);
     } else {
         unitizeBasic(info, inputSpec, outputSpec, unitStyle);
     }
 }
 
-function unitizeFaceted(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
+function unitizeFaceted(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle, facet: FacetEncodingFieldDef<Field>) {
+    const data0 = outputSpec.data[0];
+
+    //groupby needs to be by facet, then column group
+    const transforms = convertAggregateToWindow(data0, (at) => [facet.field as Vega.FieldRef].concat(at.groupby as Vega.FieldRef[]));
 }
 
 function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
@@ -62,7 +67,7 @@ function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpe
     addSignals(outputSpec.signals, info.bandScaleName, info.countSize);
 
     const data0 = outputSpec.data[0];
-    const transforms = convertAggregateToWindow(data0);
+    const transforms = convertAggregateToWindow(data0, (at) => [at.groupby[0]]);
 
     const positionCorrection = getPositionCorrection(info);
 
@@ -90,14 +95,16 @@ function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpe
 }
 
 function getPositionCorrection(info: BarChartInfo) {
-    return info.quantitativeBand
-        ?
-        info.isBar ? '(-bandWidth - 0.5 * bandWidth * bandPadding)' : '(0.75 * bandWidth * bandPadding)'
-        :
-        info.isBar ? '' : '(0.25 * bandWidth * bandPadding)';
+    if (info.quantitativeBand) {
+        return info.isBar
+            ?
+            '(-bandWidth - 0.5 * bandWidth * bandPadding)'
+            :
+            '(0.75 * bandWidth * bandPadding)'
+    }
 }
 
-function convertAggregateToWindow(data: Vega.Data) {
+function convertAggregateToWindow(data: Vega.Data, getGroupby: (at: Vega.AggregateTransform) => Vega.FieldRef[]) {
     //add identifier preceding aggregate
     const idts: Vega.IdentifierTransform = {
         type: 'identifier',
@@ -112,7 +119,7 @@ function convertAggregateToWindow(data: Vega.Data) {
         type: 'window',
 
         //group by facet, then by category / bin
-        groupby: [aggregateItem.transform.groupby[0]],
+        groupby: getGroupby(aggregateItem.transform),
 
         ops: ["count"],
 

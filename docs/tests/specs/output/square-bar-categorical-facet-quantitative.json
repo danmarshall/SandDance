@@ -5,11 +5,15 @@
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
       "transform": [
+        {
+          "type": "identifier",
+          "as": "id"
+        },
         {
           "type": "extent",
           "field": "TicketCost",
@@ -29,8 +33,9 @@
           "maxbins": 30
         },
         {
-          "type": "aggregate",
+          "type": "window",
           "groupby": [
+            "TicketCost",
             "Class",
             "bin_maxbins_30_TicketCost",
             "bin_maxbins_30_TicketCost_end"
@@ -39,11 +44,16 @@
             "count"
           ],
           "fields": [
-            null
+            "id"
           ],
           "as": [
             "__count"
           ]
+        },
+        {
+          "type": "extent",
+          "field": "__count",
+          "signal": "maxcount"
         }
       ]
     },
@@ -131,11 +141,7 @@
           "scale": "y",
           "orient": "left",
           "grid": false,
-          "title": "Count of Records",
-          "labelOverlap": true,
-          "tickCount": {
-            "signal": "ceil(child_height/40)"
-          },
+          "title": "Class",
           "zindex": 0
         }
       ]
@@ -159,10 +165,12 @@
           "scale": "x",
           "orient": "bottom",
           "grid": false,
-          "title": "Class",
-          "labelAlign": "right",
-          "labelAngle": 270,
-          "labelBaseline": "middle",
+          "title": "Count of Records",
+          "labelFlush": true,
+          "labelOverlap": true,
+          "tickCount": {
+            "signal": "ceil(child_width/40)"
+          },
           "zindex": 0
         }
       ]
@@ -225,19 +233,19 @@
               },
               "x": {
                 "scale": "x",
-                "field": "Class"
+                "field": "__count"
               },
-              "width": {
+              "x2": {
                 "scale": "x",
-                "band": true
+                "value": 0
               },
               "y": {
                 "scale": "y",
-                "field": "__count"
+                "field": "Class"
               },
-              "y2": {
+              "height": {
                 "scale": "y",
-                "value": 0
+                "band": true
               }
             }
           }
@@ -245,12 +253,12 @@
       ],
       "axes": [
         {
-          "scale": "y",
-          "orient": "left",
-          "gridScale": "x",
+          "scale": "x",
+          "orient": "bottom",
+          "gridScale": "y",
           "grid": true,
           "tickCount": {
-            "signal": "ceil(child_height/40)"
+            "signal": "ceil(child_width/40)"
           },
           "domain": false,
           "labels": false,
@@ -265,6 +273,22 @@
   "scales": [
     {
       "name": "x",
+      "type": "linear",
+      "domain": {
+        "data": "source_0",
+        "field": "__count"
+      },
+      "range": [
+        0,
+        {
+          "signal": "child_width"
+        }
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "y",
       "type": "band",
       "domain": {
         "data": "source_0",
@@ -274,27 +298,11 @@
       "range": [
         0,
         {
-          "signal": "child_width"
+          "signal": "child_height"
         }
       ],
       "paddingInner": 0.1,
       "paddingOuter": 0.05
-    },
-    {
-      "name": "y",
-      "type": "linear",
-      "domain": {
-        "data": "source_0",
-        "field": "__count"
-      },
-      "range": [
-        {
-          "signal": "child_height"
-        },
-        0
-      ],
-      "nice": true,
-      "zero": true
     },
     {
       "name": "color",

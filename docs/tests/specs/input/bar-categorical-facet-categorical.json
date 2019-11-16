@@ -1,17 +1,21 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "data": {
-        "url": "../../../docs/sample-data/titanicmaster.tsv",
+        "url": "../../../sample-data/titanicmaster.tsv",
         "format": {
             "type": "tsv"
         }
     },
-    "height": 500,
-    "width": 500,
+    "height": 300,
+    "width": 300,
     "mark": "bar",
     "encoding": {
+        "facet": {
+            "field": "Joined",
+            "type": "nominal"
+        },
         "y": {
-            "field": "Gender",
+            "field": "Class",
             "type": "nominal"
         },
         "x": {

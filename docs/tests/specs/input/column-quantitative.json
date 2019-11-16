@@ -1,18 +1,21 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "data": {
-        "url": "../../../docs/sample-data/titanicmaster.tsv",
+        "url": "../../../sample-data/titanicmaster.tsv",
         "format": {
             "type": "tsv"
         }
     },
-    "height": 500,
-    "width": 500,
+    "height": 300,
+    "width": 600,
     "mark": "bar",
     "encoding": {
         "x": {
-            "field": "Gender",
-            "type": "nominal"
+            "field": "Age",
+            "type": "quantitative",
+            "bin": {
+                "maxbins": 20
+            }
         },
         "y": {
             "field": "Survived",

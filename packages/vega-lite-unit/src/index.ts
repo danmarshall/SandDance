@@ -7,19 +7,25 @@ import * as VegaLite from 'vega-lite';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
 import { unitizeBar, UnitStyle } from './bar';
 
-const inputBase = './vega-lite-specs';
-const outputBase = '../../docs/tests/specs';
+const base = '../../docs/tests/specs';
 
-const filenames = fs.readdirSync(inputBase);
-const specs = [];
+const filenames = fs.readdirSync(path.join(base, 'input'));
 
-function out(filename: string, outputSpec: Vega.Spec) {
-    specs.push(filename);
-    fs.writeFileSync(path.join(outputBase, filename), JSON.stringify(outputSpec, null, 2), 'utf8');
+interface Conversion {
+    src: string;
+    outputs: string[];
 }
 
-filenames.forEach(filename => {
-    const json = fs.readFileSync(path.join(inputBase, filename), 'utf8');
+const conversions: Conversion[] = [];
+
+function out(filename: string, outputSpec: Vega.Spec) {
+    fs.writeFileSync(path.join(base, 'output', filename), JSON.stringify(outputSpec, null, 2), 'utf8');
+}
+
+filenames.forEach(src => {
+    const conversion: Conversion = { src, outputs: [] };
+    conversions.push(conversion);
+    const json = fs.readFileSync(path.join(base, 'input', src), 'utf8');
     let vegaLiteSpec: TopLevelUnitSpec;
     try {
         vegaLiteSpec = JSON.parse(json);
@@ -35,11 +41,13 @@ filenames.forEach(filename => {
                 const styles: UnitStyle[] = ['square'];
                 styles.forEach(unitStyle => {
                     unitizeBar(vegaLiteSpec, outputSpec, unitStyle);
-                    out(`${unitStyle}-${filename}`, outputSpec);
+                    const dest = `${unitStyle}-${src}`;
+                    conversion.outputs.push(dest);
+                    out(dest, outputSpec);
                 });
             }
         }
     }
 });
 
-fs.writeFileSync(path.join(outputBase , 'index.js'), `var index = ${JSON.stringify({ specs }, null, 2)};`, 'utf8');
+fs.writeFileSync(path.join(base, 'conversions.js'), `var conversions = ${JSON.stringify(conversions, null, 2)};`, 'utf8');

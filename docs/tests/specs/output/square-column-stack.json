@@ -2,13 +2,13 @@
   "$schema": "https://vega.github.io/schema/vega/v5.json",
   "background": "white",
   "padding": 5,
-  "width": 600,
-  "height": 300,
+  "width": 500,
+  "height": 500,
   "style": "cell",
   "data": [
     {
       "name": "source_0",
-      "url": "../../../docs/sample-data/titanicmaster.tsv",
+      "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
       },
@@ -18,27 +18,9 @@
           "as": "id"
         },
         {
-          "type": "extent",
-          "field": "Age",
-          "signal": "bin_maxbins_20_Age_extent"
-        },
-        {
-          "type": "bin",
-          "field": "Age",
-          "as": [
-            "bin_maxbins_20_Age",
-            "bin_maxbins_20_Age_end"
-          ],
-          "signal": "bin_maxbins_20_Age_bins",
-          "extent": {
-            "signal": "bin_maxbins_20_Age_extent"
-          },
-          "maxbins": 20
-        },
-        {
           "type": "window",
           "groupby": [
-            "bin_maxbins_20_Age"
+            "Gender"
           ],
           "ops": [
             "count"
@@ -51,30 +33,9 @@
           ]
         },
         {
-          "type": "filter",
-          "expr": "isValid(datum[\"bin_maxbins_20_Age\"]) && isFinite(+datum[\"bin_maxbins_20_Age\"])"
-        },
-        {
           "type": "extent",
           "field": "__count",
           "signal": "maxcount"
-        }
-      ]
-    },
-    {
-      "name": "seq",
-      "transform": [
-        {
-          "type": "sequence",
-          "start": {
-            "signal": "bin_maxbins_20_Age_bins.start"
-          },
-          "stop": {
-            "signal": "bin_maxbins_20_Age_bins.stop"
-          },
-          "step": {
-            "signal": "bin_maxbins_20_Age_bins.step"
-          }
         }
       ]
     }
@@ -97,18 +58,18 @@
           },
           "x": {
             "scale": "x",
-            "field": "bin_maxbins_20_Age",
+            "field": "Gender",
             "offset": {
-              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.75 * bandWidth * bandPadding)"
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
             }
+          },
+          "width": {
+            "signal": "marksize"
           },
           "y": {
             "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
           },
           "height": {
-            "signal": "marksize"
-          },
-          "width": {
             "signal": "marksize"
           }
         }
@@ -118,9 +79,11 @@
   "scales": [
     {
       "name": "x",
-      "type": "linear",
+      "type": "band",
       "domain": {
-        "signal": "[bin_maxbins_20_Age_bins.start, bin_maxbins_20_Age_bins.stop]"
+        "data": "source_0",
+        "field": "Gender",
+        "sort": true
       },
       "range": [
         0,
@@ -128,10 +91,9 @@
           "signal": "width"
         }
       ],
-      "bins": {
-        "signal": "bin_maxbins_20_Age_bins"
-      },
-      "zero": false
+      "padding": {
+        "signal": "bandPadding"
+      }
     },
     {
       "name": "y",
@@ -158,24 +120,6 @@
         "sort": true
       },
       "range": "category"
-    },
-    {
-      "name": "quantBand",
-      "type": "band",
-      "domain": {
-        "data": "seq",
-        "field": "data",
-        "sort": true
-      },
-      "range": [
-        0,
-        {
-          "signal": "width"
-        }
-      ],
-      "padding": {
-        "signal": "bandPadding"
-      }
     }
   ],
   "axes": [
@@ -198,12 +142,10 @@
       "scale": "x",
       "orient": "bottom",
       "grid": false,
-      "title": "Age (binned)",
-      "labelFlush": true,
-      "labelOverlap": true,
-      "tickCount": {
-        "signal": "ceil(width/10)"
-      },
+      "title": "Gender",
+      "labelAlign": "right",
+      "labelAngle": 270,
+      "labelBaseline": "middle",
       "zindex": 0
     },
     {
@@ -239,7 +181,7 @@
     },
     {
       "name": "bandWidth",
-      "update": "bandwidth('quantBand')"
+      "update": "bandwidth('x')"
     },
     {
       "name": "bandPadding",
