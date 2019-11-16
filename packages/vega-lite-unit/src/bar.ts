@@ -64,11 +64,7 @@ function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpe
     const data0 = outputSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
 
-    const positionCorrection = info.quantitativeBand
-        ?
-        info.isBar ? '(-bandWidth - 0.5 * bandWidth * bandPadding)' : '(0.75 * bandWidth * bandPadding)'
-        :
-        info.isBar ? '' : '(0.25 * bandWidth * bandPadding)';
+    const positionCorrection = getPositionCorrection(info);
 
     const mark0 = outputSpec.marks[0];
     modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, transforms.aggregateTransform.groupby[0], positionCorrection);
@@ -91,6 +87,14 @@ function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpe
         const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, info.bandDim);
         modifyBandScale(bandScale);
     }
+}
+
+function getPositionCorrection(info: BarChartInfo) {
+    return info.quantitativeBand
+        ?
+        info.isBar ? '(-bandWidth - 0.5 * bandWidth * bandPadding)' : '(0.75 * bandWidth * bandPadding)'
+        :
+        info.isBar ? '' : '(0.25 * bandWidth * bandPadding)';
 }
 
 function convertAggregateToWindow(data: Vega.Data) {

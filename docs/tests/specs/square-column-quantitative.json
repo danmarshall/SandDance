@@ -99,7 +99,7 @@
             "scale": "x",
             "field": "bin_maxbins_20_Age",
             "offset": {
-              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.75*bandWidth * bandPadding)"
+              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.75 * bandWidth * bandPadding)"
             }
           },
           "y": {
