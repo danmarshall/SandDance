@@ -12,77 +12,85 @@ interface TransformItem<T extends Vega.Transforms> {
     i: number;
 }
 
+interface BarChartInfo {
+    bandEncoding: TypedFieldDef<string, StandardType>;
+    isBar: boolean;
+    bandDim: string;
+    countDim: string;
+    countSize: string;
+    quantitativeBand?: boolean;
+}
+
 export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
-    const facet = inputSpec.encoding.facet;
-    if (facet) {
-        unitizeFaceted(inputSpec, outputSpec, unitStyle);
-    } else {
-        unitizeBasic(inputSpec, outputSpec, unitStyle);
-    }
-}
-
-function unitizeFaceted(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
-}
-
-function unitizeBasic(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const yEncoding = inputSpec.encoding.y as TypedFieldDef<string, StandardType>;
-    let bandEncoding: TypedFieldDef<string, StandardType>;
-    let isBar = false;
-    let quantitativeBand: boolean;
-    let bandDim: string;
-    let countDim: string;
-    let countSize: string;
-
+    let info: BarChartInfo;
     if (xEncoding.aggregate) {
-        isBar = true;
-        bandDim = 'y';
-        countDim = 'x';
-        countSize = 'child_width';
-        bandEncoding = yEncoding;
+        info = {
+            isBar: true,
+            bandDim: 'y',
+            countDim: 'x',
+            countSize: 'child_width',
+            bandEncoding: yEncoding
+        };
     } else {
-        isBar = false;
-        bandDim = 'x';
-        countDim = 'y';
-        countSize = 'child_height';
-        bandEncoding = xEncoding;
+        info = {
+            isBar: false,
+            bandDim: 'x',
+            countDim: 'y',
+            countSize: 'child_height',
+            bandEncoding: xEncoding
+        };
     }
+    info.quantitativeBand = info.bandEncoding.type === 'quantitative';
 
-    quantitativeBand = bandEncoding.type === 'quantitative';
+    const facet = inputSpec.encoding.facet;
+    if (facet) {
+        unitizeFaceted(info, inputSpec, outputSpec, unitStyle);
+    } else {
+        unitizeBasic(info, inputSpec, outputSpec, unitStyle);
+    }
+}
 
-    const bandScaleName = quantitativeBand ? 'quantBand' : bandDim;
+function unitizeFaceted(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
+}
+
+function unitizeBasic(info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
+
+
+    const bandScaleName = info.quantitativeBand ? 'quantBand' : info.bandDim;
 
     outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, bandScaleName, countSize);
+    addSignals(outputSpec.signals, bandScaleName, info.countSize);
 
     const data0 = outputSpec.data[0];
     const transforms = convertAggregateToWindow(data0);
 
-    const sss = quantitativeBand
+    const sss = info.quantitativeBand
         ?
-        isBar ? '(-bandWidth - 0.5*bandWidth * bandPadding)' : '(0.75*bandWidth * bandPadding)'
+        info.isBar ? '(-bandWidth - 0.5*bandWidth * bandPadding)' : '(0.75*bandWidth * bandPadding)'
         :
-        isBar ? '' : '(0.25 * bandWidth * bandPadding)';
+        info.isBar ? '' : '(0.25 * bandWidth * bandPadding)';
 
     const mark0 = outputSpec.marks[0];
-    modifyMark(mark0, !isBar, bandDim, countDim, bandDim, countDim, transforms.aggregateTransform.groupby[0], sss);
+    modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, transforms.aggregateTransform.groupby[0], sss);
 
-    const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, countDim);
+    const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
     modifyCountScale(yScale);
 
-    if (quantitativeBand) {
+    if (info.quantitativeBand) {
         const binTransform = findTransformByType<Vega.BinTransform>(data0, 'bin');
         const binSignalName = binTransform.transform.signal;
 
         addSequence(outputSpec.data, binSignalName);
 
-        const bandScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, bandDim);
+        const bandScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.bandDim);
         const range = bandScale.range as any;
 
         addBandScale(outputSpec.scales, 'quantBand', range);
 
     } else {
-        const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, bandDim);
+        const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, info.bandDim);
         modifyBandScale(bandScale);
     }
 }
