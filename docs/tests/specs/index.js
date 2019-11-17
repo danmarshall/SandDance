@@ -18,9 +18,11 @@ function view(name, spec) {
     }
 }
 
-function addCell(table, title, spec) {
-    const content = `${title}\n${JSON.stringify(spec, null, 2)}`;
-    addElement('pre', content, table);
+function addCell(parentElement, title, spec) {
+    const div = addElement('div', null, parentElement);
+    addElement('h4', title, div);
+    const textarea = addElement('textarea', null, div);
+    textarea.value = JSON.stringify(spec, null, 2);
 }
 
 function list() {
@@ -34,10 +36,10 @@ function list() {
         conversion.downloads.forEach(download => {
             view(download.src, download.spec);
             if (urlFilter) {
-                const table = addElement('div');
-                table.setAttribute('class', 'spec-table');
-                addCell(table, 'original', spec);
-                addCell(table, 'converted', download.spec);
+                const div = addElement('div');
+                div.setAttribute('class', 'spec-table');
+                addCell(div, 'original', spec);
+                addCell(div, 'converted', download.spec);
             }
         })
         addElement('hr');
