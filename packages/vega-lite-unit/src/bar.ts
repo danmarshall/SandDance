@@ -22,15 +22,15 @@ interface BarChartInfo {
     quantitativeBand?: boolean;
     bandScaleName?: string;
     data0: Vega.Data;
-    aggregateTransform?: TransformItem<Vega.AggregateTransform>;
-    bandBinTransform?: Vega.BinTransform;
-    windowTransform?: Vega.WindowTransform;
+    bandGroup?: string;
 }
 
-export function unitizeBar(name: string, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
+export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const yEncoding = inputSpec.encoding.y as TypedFieldDef<string, StandardType>;
+    const facet = inputSpec.encoding.facet;
     const data0 = outputSpec.data[0];
+    let bandBinTransform: Vega.BinTransform;
 
     let info: BarChartInfo;
     if (xEncoding.aggregate) {
@@ -55,10 +55,24 @@ export function unitizeBar(name: string, inputSpec: TopLevelUnitSpec, outputSpec
     info.quantitativeBand = info.bandEncoding.type === 'quantitative';
 
     if (info.quantitativeBand) {
-        info.bandBinTransform = findBinTransform(data0, info.bandEncoding.field).transform;
+        bandBinTransform = findBinTransform(data0, info.bandEncoding.field).transform;
+        info.bandGroup = bandBinTransform.as[0];
         info.bandScaleName = 'quantBand';
+        const binSignalName = bandBinTransform.signal;
+
+        addSequence(outputSpec.data, binSignalName);
+
+        const linearScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.bandDim);
+        const range = linearScale.range as any;
+
+        addBandScale(outputSpec.scales, 'quantBand', range);
+
     } else {
         info.bandScaleName = info.bandDim;
+        info.bandGroup = info.bandEncoding.field;
+
+        const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, info.bandDim);
+        modifyBandScale(bandScale);
     }
 
     //add identifier
@@ -68,19 +82,26 @@ export function unitizeBar(name: string, inputSpec: TopLevelUnitSpec, outputSpec
     };
     data0.transform.unshift(idts);
 
-    info.aggregateTransform = findTransformByType<Vega.AggregateTransform>(data0, 'aggregate');
+    outputSpec.signals = outputSpec.signals || [];
+    addSignals(outputSpec.signals, info.bandScaleName, info.countSize, !facet);
 
-    const facet = inputSpec.encoding.facet;
-    if (facet) {
-        unitizeFaceted(name, info, inputSpec, outputSpec, unitStyle, facet);
-    } else {
-        unitizeBasic(name, info, inputSpec, outputSpec, unitStyle);
-    }
+    const markAndGroupBy = facet ?
+        unitizeFaceted(info, outputSpec, facet)
+        :
+        unitizeBasic(info, outputSpec)
+        ;
+
+    const windowTransform = createWindowTransform(markAndGroupBy.groupby);
+    const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
+    info.data0.transform[aggregateTransformIndex] = windowTransform;
+
+    const positionCorrection = getPositionCorrection(info);
+    modifyMark(markAndGroupBy.mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, info.bandGroup, positionCorrection);
 
     //remove stack
-    const stackTransform = findTransformByType<Vega.StackTransform>(data0, 'stack');
-    if (stackTransform) {
-        data0.transform.splice(stackTransform.i, 1);
+    const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
+    if (stackTransformIndex) {
+        data0.transform.splice(stackTransformIndex, 1);
     }
 
     //add maxcount
@@ -92,65 +113,31 @@ export function unitizeBar(name: string, inputSpec: TopLevelUnitSpec, outputSpec
 
     const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
     modifyCountScale(yScale);
-
-    if (info.quantitativeBand) {
-        const binSignalName = info.bandBinTransform.signal;
-
-        addSequence(outputSpec.data, binSignalName);
-
-        const bandScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.bandDim);
-        const range = bandScale.range as any;
-
-        addBandScale(outputSpec.scales, 'quantBand', range);
-
-    } else {
-        const bandScale = findScaleByName<Vega.BandScale>(outputSpec.scales, info.bandDim);
-        modifyBandScale(bandScale);
-    }
-
 }
 
-function unitizeFaceted(name: string, info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle, facet: FacetEncodingFieldDef<Field>) {
-    outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, info.bandScaleName, info.countSize, false);
-
+function unitizeFaceted(info: BarChartInfo, outputSpec: Vega.Spec, facet: FacetEncodingFieldDef<Field>) {
     const facetQuantitative = facet.type === 'quantitative';
     let groupby: string[];
-
+    //groupby needs to be by facet, then column group
     if (facetQuantitative) {
         const bandFacetTransform = findBinTransform(info.data0, facet.field as string);
         groupby = [
             bandFacetTransform.transform.as[0],
-            info.aggregateTransform.transform.groupby[0]
+            info.bandGroup
         ];
     } else {
         groupby = [
-            facet.field,
-            info.aggregateTransform.transform.groupby[0]
+            facet.field as string,
+            info.bandGroup
         ];
     }
-
-    //groupby needs to be by facet, then column group
-    convertAggregateToWindow(info, groupby);
-
-    const positionCorrection = getPositionCorrection(info);
-
     const mark0 = findMarkWithScope(outputSpec.marks);
-    modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, groupby[1], positionCorrection);
+    return { mark0, groupby };
 }
 
-function unitizeBasic(name: string, info: BarChartInfo, inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
-    outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, info.bandScaleName, info.countSize, true);
-
-    const groupby = info.aggregateTransform.transform.groupby[0] as string;
-
-    convertAggregateToWindow(info, [groupby]);
-
-    const positionCorrection = getPositionCorrection(info);
-
+function unitizeBasic(info: BarChartInfo, outputSpec: Vega.Spec) {
     const mark0 = outputSpec.marks[0];
-    modifyMark(mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, groupby, positionCorrection);
+    return { mark0, groupby: [info.bandGroup] };
 }
 
 function getPositionCorrection(info: BarChartInfo) {
@@ -163,10 +150,8 @@ function getPositionCorrection(info: BarChartInfo) {
     }
 }
 
-function convertAggregateToWindow(info: BarChartInfo, groupby: Vega.FieldRef[]) {
-
-    //change aggregate to window
-    const windowTransform: Vega.WindowTransform = {
+function createWindowTransform(groupby: Vega.FieldRef[]) {
+    const wt: Vega.WindowTransform = {
         type: 'window',
 
         //group by facet, then by category / bin
@@ -180,7 +165,7 @@ function convertAggregateToWindow(info: BarChartInfo, groupby: Vega.FieldRef[]) 
         fields: ["id"],
         as: ["__count"]
     };
-    info.data0.transform[info.aggregateTransform.i] = windowTransform;
+    return wt;
 }
 
 function addSequence(data: Vega.Data[], binSignalName: string) {
@@ -288,11 +273,11 @@ function findBinTransform(d: Vega.Data, fieldName: string) {
     }
 }
 
-function findTransformByType<T extends Vega.Transforms>(d: Vega.Data, type: 'aggregate' | 'stack') {
+function findIndexOfTransformByType(d: Vega.Data, type: 'aggregate' | 'stack') {
     for (let i = 0; i < d.transform.length; i++) {
         let transform = d.transform[i];
         if (transform.type === type) {
-            return { transform, i } as TransformItem<T>;
+            return i;
         }
     }
 }
