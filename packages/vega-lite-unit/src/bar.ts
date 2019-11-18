@@ -60,11 +60,12 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         info.bandScaleName = 'quantBand';
         const binSignalName = bandBinTransform.signal;
 
+        //add sequence if quantitative
         addSequence(outputSpec.data, binSignalName);
 
+        //create band scale from linear scale
         const linearScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.bandDim);
         const range = linearScale.range as any;
-
         addBandScale(outputSpec.scales, 'quantBand', range);
 
     } else {
@@ -82,6 +83,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     };
     data0.transform.unshift(idts);
 
+    //add signals for mark size
     outputSpec.signals = outputSpec.signals || [];
     addSignals(outputSpec.signals, info.bandScaleName, info.countSize, !facet);
 
@@ -91,12 +93,14 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         unitizeBasic(info, outputSpec)
         ;
 
+    //convert aggreagate to window
     const windowTransform = createWindowTransform(markAndGroupBy.groupby);
     const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
     info.data0.transform[aggregateTransformIndex] = windowTransform;
 
+    //modify mark
     const positionCorrection = getPositionCorrection(info);
-    modifyMark(markAndGroupBy.mark0, !info.isBar, info.bandDim, info.countDim, info.bandDim, info.countDim, info.bandGroup, positionCorrection);
+    modifyMark(markAndGroupBy.mark0, info, positionCorrection);
 
     //remove stack
     const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
@@ -111,6 +115,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         signal: "maxcount"
     })
 
+    //modify y scale
     const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
     modifyCountScale(yScale);
 }
@@ -214,23 +219,24 @@ function addBandScale(scales: Vega.Scale[], name: string, range: Vega.RangeBand)
     });
 }
 
-function modifyMark(mark0: Vega.Mark, subtractMarksize: boolean, bandDim: string, countDim: string, bandScaleName: string, countScaleName: string, field: string, offsetAdditionExpression?: string) {
+function modifyMark(mark0: Vega.Mark, info: BarChartInfo, offsetAdditionExpression?: string) {
     const { update } = mark0.encode;
+    const subtractMarksize = !info.isBar;
 
     const expressions = ['bandWidth /cellcount * ( (datum.__count-1) %cellcount)'];
     if (offsetAdditionExpression) {
         expressions.push(offsetAdditionExpression);
     }
 
-    update[bandDim] = {
-        scale: bandScaleName,
-        field,
+    update[info.bandDim] = {
+        scale: info.bandDim,
+        field: info.bandGroup,
         offset: {
             signal: expressions.join(' + ')
         }
     };
-    update[countDim] = {
-        signal: `scale('${countScaleName}', floor((datum.__count-1)/cellcount) * cellcount)${subtractMarksize ? '-marksize' : ''}`
+    update[info.countDim] = {
+        signal: `scale('${info.countDim}', floor((datum.__count-1)/cellcount) * cellcount)${subtractMarksize ? '-marksize' : ''}`
     };
 
     update.width = update.height = { signal: "marksize" };
