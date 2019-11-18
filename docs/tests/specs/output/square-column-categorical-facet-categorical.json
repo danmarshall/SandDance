@@ -18,8 +18,7 @@
           "type": "window",
           "groupby": [
             "Gender",
-            "Class",
-            "Gender"
+            "Class"
           ],
           "ops": [
             "count"
@@ -81,6 +80,26 @@
     {
       "name": "child_height",
       "value": 300
+    },
+    {
+      "name": "bandWidth",
+      "update": "bandwidth('x')"
+    },
+    {
+      "name": "bandPadding",
+      "value": 0.1
+    },
+    {
+      "name": "cellcount",
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+    },
+    {
+      "name": "gap",
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
+    },
+    {
+      "name": "marksize",
+      "update": "bandWidth/cellcount-gap"
     }
   ],
   "layout": {
@@ -211,19 +230,19 @@
               },
               "x": {
                 "scale": "x",
-                "field": "Class"
+                "field": "Class",
+                "offset": {
+                  "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
+                }
               },
               "width": {
-                "scale": "x",
-                "band": true
+                "signal": "marksize"
               },
               "y": {
-                "scale": "y",
-                "field": "__count"
+                "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
               },
-              "y2": {
-                "scale": "y",
-                "value": 0
+              "height": {
+                "signal": "marksize"
               }
             }
           }
@@ -263,8 +282,9 @@
           "signal": "child_width"
         }
       ],
-      "paddingInner": 0.1,
-      "paddingOuter": 0.05
+      "padding": {
+        "signal": "bandPadding"
+      }
     },
     {
       "name": "y",

@@ -36,10 +36,7 @@
           "type": "window",
           "groupby": [
             "Joined",
-            "bin_maxbins_20_Age",
-            "bin_maxbins_20_Age_end",
-            "Class",
-            "Joined"
+            "bin_maxbins_20_Age"
           ],
           "ops": [
             "count"
@@ -95,6 +92,23 @@
           }
         }
       ]
+    },
+    {
+      "name": "seq",
+      "transform": [
+        {
+          "type": "sequence",
+          "start": {
+            "signal": "child_bin_maxbins_20_Age_bins.start"
+          },
+          "stop": {
+            "signal": "child_bin_maxbins_20_Age_bins.stop"
+          },
+          "step": {
+            "signal": "child_bin_maxbins_20_Age_bins.step"
+          }
+        }
+      ]
     }
   ],
   "signals": [
@@ -105,6 +119,26 @@
     {
       "name": "child_height",
       "value": 300
+    },
+    {
+      "name": "bandWidth",
+      "update": "bandwidth('quantBand')"
+    },
+    {
+      "name": "bandPadding",
+      "value": 0.1
+    },
+    {
+      "name": "cellcount",
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+    },
+    {
+      "name": "gap",
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
+    },
+    {
+      "name": "marksize",
+      "update": "bandWidth/cellcount-gap"
     }
   ],
   "layout": {
@@ -235,34 +269,21 @@
                 "scale": "color",
                 "field": "Class"
               },
-              "x2": [
-                {
-                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
-                  "value": 0
-                },
-                {
-                  "scale": "x",
-                  "field": "bin_maxbins_20_Age",
-                  "offset": 1
+              "x": {
+                "scale": "x",
+                "field": "bin_maxbins_20_Age",
+                "offset": {
+                  "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount) + (0.75 * bandWidth * bandPadding)"
                 }
-              ],
-              "x": [
-                {
-                  "test": "!isValid(datum[\"bin_maxbins_20_Age\"]) || !isFinite(+datum[\"bin_maxbins_20_Age\"])",
-                  "value": 0
-                },
-                {
-                  "scale": "x",
-                  "field": "bin_maxbins_20_Age_end"
-                }
-              ],
-              "y": {
-                "scale": "y",
-                "field": "__count_end"
               },
-              "y2": {
-                "scale": "y",
-                "field": "__count_start"
+              "y": {
+                "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+              },
+              "height": {
+                "signal": "marksize"
+              },
+              "width": {
+                "signal": "marksize"
               }
             }
           }
@@ -310,10 +331,7 @@
       "type": "linear",
       "domain": {
         "data": "source_0",
-        "fields": [
-          "__count_start",
-          "__count_end"
-        ]
+        "field": "__count"
       },
       "range": [
         {
@@ -333,6 +351,24 @@
         "sort": true
       },
       "range": "category"
+    },
+    {
+      "name": "quantBand",
+      "type": "band",
+      "domain": {
+        "data": "seq",
+        "field": "data",
+        "sort": true
+      },
+      "range": [
+        0,
+        {
+          "signal": "child_width"
+        }
+      ],
+      "padding": {
+        "signal": "bandPadding"
+      }
     }
   ],
   "legends": [

@@ -18,8 +18,7 @@
           "type": "window",
           "groupby": [
             "Joined",
-            "Class",
-            "Joined"
+            "Class"
           ],
           "ops": [
             "count"
@@ -81,6 +80,26 @@
     {
       "name": "child_height",
       "value": 300
+    },
+    {
+      "name": "bandWidth",
+      "update": "bandwidth('y')"
+    },
+    {
+      "name": "bandPadding",
+      "value": 0.1
+    },
+    {
+      "name": "cellcount",
+      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_width)))"
+    },
+    {
+      "name": "gap",
+      "update": "min(0.1*(bandWidth/(cellcount-1)),1)"
+    },
+    {
+      "name": "marksize",
+      "update": "bandWidth/cellcount-gap"
     }
   ],
   "layout": {
@@ -208,20 +227,20 @@
                 "field": "Class"
               },
               "x": {
-                "scale": "x",
-                "field": "__count"
-              },
-              "x2": {
-                "scale": "x",
-                "value": 0
+                "signal": "scale('x', floor((datum.__count-1)/cellcount) * cellcount)"
               },
               "y": {
                 "scale": "y",
-                "field": "Class"
+                "field": "Class",
+                "offset": {
+                  "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
+                }
               },
               "height": {
-                "scale": "y",
-                "band": true
+                "signal": "marksize"
+              },
+              "width": {
+                "signal": "marksize"
               }
             }
           }
@@ -277,8 +296,9 @@
           "signal": "child_height"
         }
       ],
-      "paddingInner": 0.1,
-      "paddingOuter": 0.05
+      "padding": {
+        "signal": "bandPadding"
+      }
     },
     {
       "name": "color",
