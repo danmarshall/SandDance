@@ -18,10 +18,6 @@
             "field": "Survived",
             "type": "quantitative",
             "aggregate": "count"
-        },
-        "color": {
-            "field": "Class",
-            "type": "nominal"
         }
     }
 }
