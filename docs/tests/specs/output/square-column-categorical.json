@@ -7,18 +7,17 @@
   "style": "cell",
   "data": [
     {
-      "name": "source_0",
+      "name": "source_00",
       "url": "../../../sample-data/titanicmaster.tsv",
       "format": {
         "type": "tsv"
-      },
+      }
+    },
+    {
+      "name": "source_0",
       "transform": [
         {
-          "type": "identifier",
-          "as": "id"
-        },
-        {
-          "type": "window",
+          "type": "aggregate",
           "groupby": [
             "Class"
           ],
@@ -26,7 +25,7 @@
             "count"
           ],
           "fields": [
-            "id"
+            null
           ],
           "as": [
             "__count"
@@ -37,7 +36,8 @@
           "field": "__count",
           "signal": "maxcount"
         }
-      ]
+      ],
+      "source": "source_00"
     }
   ],
   "marks": [
@@ -53,27 +53,109 @@
       "encode": {
         "update": {
           "fill": {
-            "scale": "color",
-            "field": "Class"
+            "value": "#4c78a8"
           },
           "x": {
             "scale": "x",
-            "field": "Class",
-            "offset": {
-              "signal": "bandWidth /cellcount * ( (datum.__count-1) %cellcount)"
-            }
+            "field": "Class"
           },
           "width": {
-            "signal": "marksize"
+            "scale": "x",
+            "band": true
           },
           "y": {
-            "signal": "scale('y', floor((datum.__count-1)/cellcount) * cellcount)-marksize"
+            "scale": "y",
+            "field": "__count"
           },
-          "height": {
-            "signal": "marksize"
+          "y2": {
+            "scale": "y",
+            "value": 0
+          },
+          "opacity": {
+            "value": 0.2
           }
         }
       }
+    },
+    {
+      "name": "bandfacet",
+      "type": "group",
+      "from": {
+        "facet": {
+          "name": "bandfacet_0",
+          "data": "source_00",
+          "groupby": [
+            "Class"
+          ]
+        }
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "scale('x', datum['Class'])"
+          },
+          "width": {
+            "signal": "bandwidth('x')"
+          },
+          "y": {
+            "signal": "scale('y', datum['count'])"
+          },
+          "height": {
+            "signal": "child_height - scale('y', datum['count'])"
+          },
+          "fill": {
+            "signal": "\"pink\""
+          },
+          "opacity": {
+            "value": 0.2
+          }
+        }
+      },
+      "data": [
+        {
+          "name": "bandfacet_1",
+          "source": "source_00",
+          "transform": [
+            {
+              "type": "filter",
+              "expr": "datum['Class'] == parent['Class']"
+            },
+            {
+              "type": "window",
+              "ops": [
+                "count"
+              ],
+              "as": [
+                "bandfacet_id"
+              ]
+            },
+            {
+              "type": "extent",
+              "field": "bandfacet_id",
+              "signal": "bandfacet_id_extent"
+            },
+            {
+              "type": "filter",
+              "expr": "datum.bandfacet_id == bandfacet_id_extent[1]"
+            }
+          ]
+        }
+      ],
+      "marks": [
+        {
+          "type": "text",
+          "from": {
+            "data": "bandfacet_1"
+          },
+          "encode": {
+            "update": {
+              "text": {
+                "field": "bandfacet_id"
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "scales": [
@@ -110,16 +192,6 @@
       ],
       "nice": true,
       "zero": true
-    },
-    {
-      "name": "color",
-      "type": "ordinal",
-      "domain": {
-        "data": "source_0",
-        "field": "Class",
-        "sort": true
-      },
-      "range": "category"
     }
   ],
   "axes": [
@@ -158,16 +230,6 @@
         "signal": "ceil(height/40)"
       },
       "zindex": 0
-    }
-  ],
-  "legends": [
-    {
-      "fill": "color",
-      "gradientLength": {
-        "signal": "clamp(height, 64, 200)"
-      },
-      "symbolType": "square",
-      "title": "Class"
     }
   ],
   "signals": [
