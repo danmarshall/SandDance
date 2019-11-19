@@ -19,6 +19,7 @@ interface Conversion {
 const conversions: Conversion[] = [];
 
 function out(filename: string, outputSpec: Vega.Spec) {
+    process.stdout.write(`writing ${filename} \n`);
     fs.writeFileSync(path.join(base, 'output', filename), JSON.stringify(outputSpec, null, 2), 'utf8');
 }
 
@@ -35,11 +36,12 @@ filenames.forEach(src => {
     }
     if (vegaLiteSpec) {
         const output = VegaLite.compile(vegaLiteSpec);
-        const outputSpec = output.spec as Vega.Spec;
+        const spec = output.spec as Vega.Spec;
         switch (vegaLiteSpec.mark) {
             case 'bar': {
                 const styles: UnitStyle[] = ['square'];
                 styles.forEach(unitStyle => {
+                    const outputSpec = JSON.parse(JSON.stringify(spec));
                     unitizeBar(vegaLiteSpec, outputSpec, unitStyle);
                     const dest = `${unitStyle}-${src}`;
                     conversion.outputs.push(dest);
