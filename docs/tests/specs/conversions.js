@@ -36,12 +36,6 @@ var conversions = [
     ]
   },
   {
-    "src": "bar-stack.json",
-    "outputs": [
-      "square-bar-stack.json"
-    ]
-  },
-  {
     "src": "column-categorical-facet-categorical.json",
     "outputs": [
       "square-column-categorical-facet-categorical.json"
@@ -75,12 +69,6 @@ var conversions = [
     "src": "column-quantitative.json",
     "outputs": [
       "square-column-quantitative.json"
-    ]
-  },
-  {
-    "src": "column-stack.json",
-    "outputs": [
-      "square-column-stack.json"
     ]
   }
 ];
