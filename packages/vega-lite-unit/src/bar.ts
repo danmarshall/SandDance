@@ -22,14 +22,18 @@ interface BarChartInfo {
     quantitativeBand?: boolean;
     bandScaleName?: string;
     data0: Vega.Data;
+    binData0?: Vega.Data;
     bandGroup?: string;
+    facetQuantitative?: boolean;
+
 }
 
 export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
     const xEncoding = inputSpec.encoding.x as TypedFieldDef<string, StandardType>;
     const yEncoding = inputSpec.encoding.y as TypedFieldDef<string, StandardType>;
     const facet = inputSpec.encoding.facet;
-    const data0 = outputSpec.data[0];
+    const data0 = outputSpec.data[0] as Vega.SourceData;
+    const data0Url = outputSpec.data[0] as Vega.UrlData;
     let bandBinTransform: Vega.BinTransform;
 
     let info: BarChartInfo;
@@ -53,9 +57,30 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         };
     }
     info.quantitativeBand = info.bandEncoding.type === 'quantitative';
+    info.facetQuantitative = facet && facet.type === 'quantitative';
+
+    const zeroData: Vega.Data = {
+        name: 'source_00',
+        url: data0Url.url,
+        format: data0Url.format
+    };
+    outputSpec.data.unshift(zeroData);
+
+    data0.source = 'source_00';
+    delete data0Url.url;
+    delete data0.format;
 
     if (info.quantitativeBand) {
         bandBinTransform = findBinTransform(data0, info.bandEncoding.field).transform;
+
+        zeroData.transform = [
+            data0.transform.shift(),
+            data0.transform.shift()
+        ];
+
+        info.binData0 = zeroData;
+
+
         info.bandGroup = bandBinTransform.as[0];
         info.bandScaleName = 'quantBand';
         const binSignalName = bandBinTransform.signal;
@@ -69,6 +94,8 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         addBandScale(outputSpec.scales, 'quantBand', range);
 
     } else {
+        info.binData0 = data0;
+
         info.bandScaleName = info.bandDim;
         info.bandGroup = info.bandEncoding.field;
 
@@ -76,12 +103,19 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         modifyBandScale(bandScale);
     }
 
+    if (info.facetQuantitative) {
+        info.binData0 = zeroData;
+        zeroData.transform = zeroData.transform || [];
+        zeroData.transform.push(data0.transform.shift());
+        zeroData.transform.push(data0.transform.shift());
+    }
+
     //add identifier
-    const idts: Vega.IdentifierTransform = {
-        type: 'identifier',
-        as: 'id'
-    };
-    data0.transform.unshift(idts);
+    // const idts: Vega.IdentifierTransform = {
+    //     type: 'identifier',
+    //     as: 'id'
+    // };
+    // data0.transform.unshift(idts);
 
     //add signals for mark size
     outputSpec.signals = outputSpec.signals || [];
@@ -93,19 +127,132 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         unitizeBasic(info, outputSpec)
         ;
 
+    //add a facet for the column
+    markAndGroupBy.marks[0].encode.update.opacity = { value: 0.2 };
+    const barFacet: Vega.Mark = {
+        name: 'bandfacet',
+        type: 'group',
+        from: {
+            facet: {
+                name: 'bandfacet_0',
+                data: facet ? 'facet' : 'source_00',
+                groupby: markAndGroupBy.groupby
+            }
+        },
+        encode: {
+            update: info.isBar
+                ?
+                {
+                    y: {
+                        signal: `scale('${info.bandScaleName}', datum['${info.bandGroup}'])`
+                    },
+                    height: {
+                        signal: `bandwidth('${info.bandScaleName}')`
+                    },
+                    x: {
+                        signal: `scale('${info.countDim}', 0)`
+                    },
+                    width: {
+                        signal: `scale('${info.countDim}', datum['count'])`
+                    },
+                    fill: {
+                        signal: '"pink"'
+                    },
+                    opacity: {
+                        value: 0.4
+                    }
+                }
+                :
+                {
+                    x: {
+                        signal: `scale('${info.bandScaleName}', datum['${info.bandGroup}'])`
+                    },
+                    width: {
+                        signal: `bandwidth('${info.bandScaleName}')`
+                    },
+                    y: {
+                        signal: `scale('${info.countDim}', datum['count'])`
+                    },
+                    height: {
+                        signal: `child_height - scale('${info.countDim}', datum['count'])`
+                    },
+                    fill: {
+                        signal: '"pink"'
+                    },
+                    opacity: {
+                        value: 0.2
+                    }
+                }
+        },
+        data: [
+            {
+                name: "bandfacet_1",
+                source: "source_00",
+                transform: [
+                    {
+                        type: "filter",
+                        expr: markAndGroupBy.groupby.map(f => `datum['${f}'] == parent['${f}']`).join(' && ')
+                    },
+                    {
+                        type: "window",
+                        ops: [
+                            "count"
+                        ],
+                        as: [
+                            "bandfacet_id"
+                        ]
+                    },
+                    {
+                        type: 'extent',
+                        field: 'bandfacet_id',
+                        signal: 'bandfacet_id_extent'
+                    },
+
+                    //remove this once we get a rect
+                    {
+                        type: 'filter',
+                        expr: 'datum.bandfacet_id == bandfacet_id_extent[1]'
+                    }
+                ]
+            }
+        ],
+        marks: [
+            {
+                type: 'text',
+                from: {
+                    data: 'bandfacet_1'
+                },
+                encode: {
+                    update: {
+                        text: {
+                            field: 'bandfacet_id'
+                        }
+                    }
+                }
+            }
+        ]
+    };
+    if (facet) {
+        const from = outputSpec.marks.filter(m => m.name === 'cell')[0].from as Vega.FromFacet & { facet: Vega.Facet; };
+        from.facet.data = 'source_00';
+    }
+    markAndGroupBy.marks.push(barFacet);
+
+
+
     //convert aggreagate to window
     const windowTransform = createWindowTransform(markAndGroupBy.groupby);
     const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
-    info.data0.transform[aggregateTransformIndex] = windowTransform;
+    //info.data0.transform[aggregateTransformIndex] = windowTransform;
 
     //modify mark
     const positionCorrection = getPositionCorrection(info);
-    modifyMark(markAndGroupBy.mark0, info, positionCorrection);
+    //modifyMark(markAndGroupBy.mark0, info, positionCorrection);
 
     //remove stack
     const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
     if (stackTransformIndex) {
-        data0.transform.splice(stackTransformIndex, 1);
+        //data0.transform.splice(stackTransformIndex, 1);
     }
 
     //add maxcount
@@ -117,15 +264,14 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     //modify y scale
     const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
-    modifyCountScale(yScale);
+    //modifyCountScale(yScale);
 }
 
 function unitizeFaceted(info: BarChartInfo, outputSpec: Vega.Spec, facet: FacetEncodingFieldDef<Field>) {
-    const facetQuantitative = facet.type === 'quantitative';
     let groupby: string[];
     //groupby needs to be by facet, then column group
-    if (facetQuantitative) {
-        const bandFacetTransform = findBinTransform(info.data0, facet.field as string);
+    if (info.facetQuantitative) {
+        const bandFacetTransform = findBinTransform(info.binData0, facet.field as string);
         groupby = [
             bandFacetTransform.transform.as[0],
             info.bandGroup
@@ -136,13 +282,13 @@ function unitizeFaceted(info: BarChartInfo, outputSpec: Vega.Spec, facet: FacetE
             info.bandGroup
         ];
     }
-    const mark0 = findMarkWithScope(outputSpec.marks);
-    return { mark0, groupby };
+    const marks = findMarkWithScope(outputSpec.marks);
+    return { marks, groupby };
 }
 
 function unitizeBasic(info: BarChartInfo, outputSpec: Vega.Spec) {
-    const mark0 = outputSpec.marks[0];
-    return { mark0, groupby: [info.bandGroup] };
+    const marks = outputSpec.marks;
+    return { marks, groupby: [info.bandGroup] };
 }
 
 function getPositionCorrection(info: BarChartInfo) {
@@ -264,7 +410,7 @@ function findMarkWithScope(ms: Vega.Mark[]) {
         if (m.type === 'group') {
             const s = m as Vega.Scope;
             if (s.marks) {
-                return s.marks[0];
+                return s.marks;
             }
         }
     }
