@@ -233,8 +233,20 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         ]
     };
     if (facet) {
-        const from = outputSpec.marks.filter(m => m.name === 'cell')[0].from as Vega.FromFacet & { facet: Vega.Facet; };
+        const cell = outputSpec.marks.filter(m => m.name === 'cell')[0] as Vega.Mark & Vega.Scope;
+        const from = cell.from as Vega.FromFacet & { facet: Vega.Facet; };
         from.facet.data = 'source_00';
+
+        cell.data = [
+            {
+                name: "s2",
+                source: "facet",
+                transform: info.data0.transform
+            }
+        ];
+
+        markAndGroupBy.marks[0].from.data = 's2';
+
     }
     markAndGroupBy.marks.push(barFacet);
 
