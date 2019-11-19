@@ -14,7 +14,7 @@ function view(name, spec) {
         const runtime = vega.parse(spec);
         new vega.View(runtime).initialize(div).renderer('canvas').run();
     } catch (e) {
-        div.innerText = `failed`;
+        div.innerText = `failed: ${e}`;
     }
 }
 
