@@ -6,7 +6,7 @@ import { Field, TypedFieldDef } from 'vega-lite/build/src/channeldef';
 import { StandardType } from 'vega-lite/build/src/type';
 import { TopLevelUnitSpec } from 'vega-lite/build/src/spec/unit';
 
-export type UnitStyle = 'square' | 'treemap' | 'normalize';
+export type UnitStyle = 'square' | 'treemap' | 'strip' | 'normalize';
 
 interface TransformItem<T extends Vega.Transforms> {
     transform: T;
