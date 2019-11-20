@@ -25,7 +25,6 @@ interface BarChartInfo {
     binData0?: Vega.Data;
     bandGroup?: string;
     facetQuantitative?: boolean;
-
 }
 
 export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, unitStyle: UnitStyle) {
@@ -192,49 +191,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     switch (unitStyle) {
         case 'square': {
-            barFacet.data = [
-                {
-                    name: 'squares',
-                    source: 'bandfacet_0',
-                    transform: [
-                        {
-                            type: 'window',
-                            ops: [
-                                'count'
-                            ],
-                            as: [
-                                'squarecount'
-                            ]
-                        },
-                        {
-                            type: "extent",
-                            field: "squarecount",
-                            signal: "maxsquarecount"
-                        }
-                    ]
-                }
-            ];
-            const squareMark: Vega.Mark = {
-                name: 'squaremarks',
-                type: 'rect',
-                from: {
-                    data: 'squares'
-                },
-                encode: {
-                    update: {}
-                }
-            };
-            modifyMark(squareMark, info, getPositionCorrection(info));
-            barFacet.marks.push(squareMark);
-
-            //only for square
-            outputSpec.signals.push.apply(outputSpec.signals, [
-                { name: "aspect", update: `bandWidth/${info.countSize}` },
-                { name: "cellcount", update: `ceil(sqrt(maxcount[1]*aspect))` },
-                { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
-                { name: "marksize", update: "bandWidth/cellcount-gap" }
-            ]);
-
+            squareMarks(info, outputSpec, barFacet);
             break;
         }
     }
@@ -287,6 +244,51 @@ function unitizeFaceted(info: BarChartInfo, outputSpec: Vega.Spec, facet: FacetE
 function unitizeBasic(info: BarChartInfo, outputSpec: Vega.Spec) {
     const marks = outputSpec.marks;
     return { marks, groupby: [info.bandGroup] };
+}
+
+function squareMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mark & Vega.Scope) {
+    barFacet.data = [
+        {
+            name: 'squares',
+            source: 'bandfacet_0',
+            transform: [
+                {
+                    type: 'window',
+                    ops: [
+                        'count'
+                    ],
+                    as: [
+                        'squarecount'
+                    ]
+                },
+                {
+                    type: "extent",
+                    field: "squarecount",
+                    signal: "maxsquarecount"
+                }
+            ]
+        }
+    ];
+    const squareMark: Vega.Mark = {
+        name: 'squaremarks',
+        type: 'rect',
+        from: {
+            data: 'squares'
+        },
+        encode: {
+            update: {}
+        }
+    };
+    modifyMark(squareMark, info, getPositionCorrection(info));
+    barFacet.marks.push(squareMark);
+
+    //only for square
+    outputSpec.signals.push.apply(outputSpec.signals, [
+        { name: "aspect", update: `bandWidth/${info.countSize}` },
+        { name: "cellcount", update: `ceil(sqrt(maxcount[1]*aspect))` },
+        { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
+        { name: "marksize", update: "bandWidth/cellcount-gap" }
+    ]);
 }
 
 function getPositionCorrection(info: BarChartInfo) {
