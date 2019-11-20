@@ -132,8 +132,12 @@
       "value": 0.1
     },
     {
+      "name": "aspect",
+      "update": "bandWidth/child_width"
+    },
+    {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_width)))"
+      "update": "ceil(sqrt(maxcount[1]*aspect))"
     },
     {
       "name": "gap",
@@ -323,13 +327,19 @@
               ]
             }
           },
+          "signals": [
+            {
+              "name": "ytop",
+              "update": "scale('y', parent['bin_maxbins_20_Age'])"
+            }
+          ],
           "encode": {
             "update": {
               "y": {
-                "signal": "scale('quantBand', datum['bin_maxbins_20_Age'])"
+                "signal": "scale('y', datum['bin_maxbins_20_Age'])-bandWidth"
               },
               "height": {
-                "signal": "bandwidth('quantBand')"
+                "signal": "bandWidth"
               },
               "x": {
                 "signal": "scale('x', 0)"
@@ -347,14 +357,51 @@
           },
           "marks": [
             {
-              "type": "text",
+              "name": "squaremarks",
+              "type": "rect",
+              "from": {
+                "data": "squares"
+              },
               "encode": {
                 "update": {
-                  "text": {
-                    "signal": "data('bandfacet_0').length"
+                  "y": {
+                    "offset": {
+                      "signal": "bandWidth /cellcount * ( (datum.squarecount-1) %cellcount) + ( - 0.5 * bandWidth * bandPadding)"
+                    }
+                  },
+                  "x": {
+                    "signal": "scale('x', floor((datum.squarecount-1)/cellcount) * cellcount)"
+                  },
+                  "height": {
+                    "signal": "marksize"
+                  },
+                  "width": {
+                    "signal": "marksize"
                   }
                 }
               }
+            }
+          ],
+          "data": [
+            {
+              "name": "squares",
+              "source": "bandfacet_0",
+              "transform": [
+                {
+                  "type": "window",
+                  "ops": [
+                    "count"
+                  ],
+                  "as": [
+                    "squarecount"
+                  ]
+                },
+                {
+                  "type": "extent",
+                  "field": "squarecount",
+                  "signal": "maxsquarecount"
+                }
+              ]
             }
           ]
         }

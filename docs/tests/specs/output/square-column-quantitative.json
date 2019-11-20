@@ -144,13 +144,19 @@
           ]
         }
       },
+      "signals": [
+        {
+          "name": "ytop",
+          "update": "scale('y', parent['count'])"
+        }
+      ],
       "encode": {
         "update": {
           "x": {
-            "signal": "scale('quantBand', datum['bin_maxbins_20_Age'])"
+            "signal": "scale('x', datum['bin_maxbins_20_Age'])"
           },
           "width": {
-            "signal": "bandwidth('quantBand')"
+            "signal": "bandWidth"
           },
           "y": {
             "signal": "scale('y', datum['count'])"
@@ -168,14 +174,51 @@
       },
       "marks": [
         {
-          "type": "text",
+          "name": "squaremarks",
+          "type": "rect",
+          "from": {
+            "data": "squares"
+          },
           "encode": {
             "update": {
-              "text": {
-                "signal": "data('bandfacet_0').length"
+              "x": {
+                "offset": {
+                  "signal": "bandWidth /cellcount * ( (datum.squarecount-1) %cellcount) + (0.75 * bandWidth * bandPadding)"
+                }
+              },
+              "y": {
+                "signal": "scale('y', floor((datum.squarecount-1)/cellcount) * cellcount)-marksize - ytop"
+              },
+              "height": {
+                "signal": "marksize"
+              },
+              "width": {
+                "signal": "marksize"
               }
             }
           }
+        }
+      ],
+      "data": [
+        {
+          "name": "squares",
+          "source": "bandfacet_0",
+          "transform": [
+            {
+              "type": "window",
+              "ops": [
+                "count"
+              ],
+              "as": [
+                "squarecount"
+              ]
+            },
+            {
+              "type": "extent",
+              "field": "squarecount",
+              "signal": "maxsquarecount"
+            }
+          ]
         }
       ]
     }
@@ -291,8 +334,12 @@
       "value": 0.1
     },
     {
+      "name": "aspect",
+      "update": "bandWidth/child_height"
+    },
+    {
       "name": "cellcount",
-      "update": "ceil(sqrt(maxcount[1]*(bandWidth/child_height)))"
+      "update": "ceil(sqrt(maxcount[1]*aspect))"
     },
     {
       "name": "gap",
