@@ -119,7 +119,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     //add signals for mark size
     outputSpec.signals = outputSpec.signals || [];
-    addSignals(outputSpec.signals, info.bandScaleName, info.countSize, !facet);
+    addSignals(outputSpec.signals, info.bandScaleName, !facet);
 
     const markAndGroupBy = facet ?
         unitizeFaceted(info, outputSpec, facet)
@@ -239,6 +239,15 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
             };
             modifyMark(squareMark, info, getPositionCorrection(info));
             barFacet.marks.push(squareMark);
+
+            //only for square
+            outputSpec.signals.push.apply(outputSpec.signals, [
+                { name: "aspect", update: `bandWidth/${info.countSize}` },
+                { name: "cellcount", update: `ceil(sqrt(maxcount[1]*aspect))` },
+                { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
+                { name: "marksize", update: "bandWidth/cellcount-gap" }
+            ]);
+
             break;
         }
     }
@@ -261,22 +270,20 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     }
     markAndGroupBy.marks.push(barFacet);
 
-
-
     //convert aggreagate to window
-    const windowTransform = createWindowTransform(markAndGroupBy.groupby);
-    const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
+    //const windowTransform = createWindowTransform(markAndGroupBy.groupby);
+    //const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
     //info.data0.transform[aggregateTransformIndex] = windowTransform;
 
     //modify mark
-    const positionCorrection = getPositionCorrection(info);
+    //const positionCorrection = getPositionCorrection(info);
     //modifyMark(markAndGroupBy.mark0, info, positionCorrection);
 
     //remove stack
-    const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
-    if (stackTransformIndex) {
+    //const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
+    //if (stackTransformIndex) {
         //data0.transform.splice(stackTransformIndex, 1);
-    }
+    //}
 
     //add maxcount
     data0.transform.push({
@@ -286,7 +293,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     })
 
     //modify y scale
-    const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
+    //const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
     //modifyCountScale(yScale);
 }
 
@@ -356,7 +363,7 @@ function addSequence(data: Vega.Data[], binSignalName: string) {
     });
 }
 
-function addSignals(signals: Vega.Signal[], bandScaleName: string, countSize: string, addChildSize: boolean) {
+function addSignals(signals: Vega.Signal[], bandScaleName: string, addChildSize: boolean) {
     if (addChildSize) {
         signals.push.apply(signals, [
             { name: "child_width", update: "width" },
@@ -367,14 +374,6 @@ function addSignals(signals: Vega.Signal[], bandScaleName: string, countSize: st
     signals.push.apply(signals, [
         { name: "bandWidth", update: `bandwidth('${bandScaleName}')` },
         { name: 'bandPadding', value: 0.1 }
-    ]);
-
-    //TODO only for square
-    signals.push.apply(signals, [
-        { name: "aspect", update: `bandWidth/${countSize}` },
-        { name: "cellcount", update: `ceil(sqrt(maxcount[1]*aspect))` },
-        { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
-        { name: "marksize", update: "bandWidth/cellcount-gap" }
     ]);
 }
 
