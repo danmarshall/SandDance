@@ -282,46 +282,13 @@
               }
             }
           },
-          "data": [
-            {
-              "name": "bandfacet_1",
-              "source": "source_00",
-              "transform": [
-                {
-                  "type": "filter",
-                  "expr": "datum['Joined'] == parent['Joined'] && datum['Class'] == parent['Class']"
-                },
-                {
-                  "type": "window",
-                  "ops": [
-                    "count"
-                  ],
-                  "as": [
-                    "bandfacet_id"
-                  ]
-                },
-                {
-                  "type": "extent",
-                  "field": "bandfacet_id",
-                  "signal": "bandfacet_id_extent"
-                },
-                {
-                  "type": "filter",
-                  "expr": "datum.bandfacet_id == bandfacet_id_extent[1]"
-                }
-              ]
-            }
-          ],
           "marks": [
             {
               "type": "text",
-              "from": {
-                "data": "bandfacet_1"
-              },
               "encode": {
                 "update": {
                   "text": {
-                    "field": "bandfacet_id"
+                    "signal": "data('bandfacet_0').length"
                   }
                 }
               }

@@ -184,48 +184,13 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                     }
                 }
         },
-        data: [
-            {
-                name: "bandfacet_1",
-                source: "source_00",
-                transform: [
-                    {
-                        type: "filter",
-                        expr: markAndGroupBy.groupby.map(f => `datum['${f}'] == parent['${f}']`).join(' && ')
-                    },
-                    {
-                        type: "window",
-                        ops: [
-                            "count"
-                        ],
-                        as: [
-                            "bandfacet_id"
-                        ]
-                    },
-                    {
-                        type: 'extent',
-                        field: 'bandfacet_id',
-                        signal: 'bandfacet_id_extent'
-                    },
-
-                    //remove this once we get a rect
-                    {
-                        type: 'filter',
-                        expr: 'datum.bandfacet_id == bandfacet_id_extent[1]'
-                    }
-                ]
-            }
-        ],
         marks: [
             {
                 type: 'text',
-                from: {
-                    data: 'bandfacet_1'
-                },
                 encode: {
                     update: {
                         text: {
-                            field: 'bandfacet_id'
+                            signal: `data('bandfacet_0').length`
                         }
                     }
                 }
