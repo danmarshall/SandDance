@@ -80,7 +80,6 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
         info.binData0 = zeroData;
 
-
         info.bandGroup = bandBinTransform.as[0];
         info.bandScaleName = 'quantBand';
         const binSignalName = bandBinTransform.signal;
@@ -117,7 +116,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     // };
     // data0.transform.unshift(idts);
 
-    //add signals for mark size
+    //add signals
     outputSpec.signals = outputSpec.signals || [];
     addSignals(outputSpec.signals, info.bandScaleName, !facet);
 
@@ -157,7 +156,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                         signal: `scale('${info.bandDim}', datum['${info.bandGroup}'])${info.quantitativeBand ? '-bandWidth' : ''}`
                     },
                     height: {
-                        signal: info.quantitativeBand ? `bandWidth` : `bandWidth`
+                        signal: `bandWidth`
                     },
                     x: {
                         signal: `scale('${info.countDim}', 0)`
@@ -178,7 +177,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                         signal: `scale('${info.bandDim}', datum['${info.bandGroup}'])`
                     },
                     width: {
-                        signal: info.quantitativeBand ? `bandWidth` : `bandWidth`
+                        signal: `bandWidth`
                     },
                     y: {
                         signal: `scale('${info.countDim}', datum['count'])`
@@ -200,10 +199,6 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     switch (unitStyle) {
         case 'square': {
-            // barFacet.signals.push(
-            //     { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
-            //     { name: "marksize", update: "bandWidth/cellcount-gap" }
-            // );
             barFacet.data = [
                 {
                     name: 'squares',
@@ -233,8 +228,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                     data: 'squares'
                 },
                 encode: {
-                    update: {
-                    }
+                    update: {}
                 }
             };
             modifyMark(squareMark, info, getPositionCorrection(info));
@@ -282,7 +276,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     //remove stack
     //const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
     //if (stackTransformIndex) {
-        //data0.transform.splice(stackTransformIndex, 1);
+    //data0.transform.splice(stackTransformIndex, 1);
     //}
 
     //add maxcount
