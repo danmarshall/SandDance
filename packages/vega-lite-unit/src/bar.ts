@@ -139,15 +139,25 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                 groupby: markAndGroupBy.groupby
             }
         },
+        signals: [
+            {
+                name: 'ytop',
+                update: info.isBar
+                    ?
+                    `scale('${info.bandDim}', parent['${info.bandGroup}'])`
+                    :
+                    `scale('${info.countDim}', parent['count'])`
+            }
+        ],
         encode: {
             update: info.isBar
                 ?
                 {
                     y: {
-                        signal: `scale('${info.bandScaleName}', datum['${info.bandGroup}'])`
+                        signal: `scale('${info.bandDim}', datum['${info.bandGroup}'])${info.quantitativeBand ? '-bandWidth' : ''}`
                     },
                     height: {
-                        signal: `bandwidth('${info.bandScaleName}')`
+                        signal: info.quantitativeBand ? `bandWidth` : `bandWidth`
                     },
                     x: {
                         signal: `scale('${info.countDim}', 0)`
@@ -165,10 +175,10 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                 :
                 {
                     x: {
-                        signal: `scale('${info.bandScaleName}', datum['${info.bandGroup}'])`
+                        signal: `scale('${info.bandDim}', datum['${info.bandGroup}'])`
                     },
                     width: {
-                        signal: `bandwidth('${info.bandScaleName}')`
+                        signal: info.quantitativeBand ? `bandWidth` : `bandWidth`
                     },
                     y: {
                         signal: `scale('${info.countDim}', datum['count'])`
@@ -185,18 +195,54 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                 }
         },
         marks: [
-            {
-                type: 'text',
-                encode: {
-                    update: {
-                        text: {
-                            signal: `data('bandfacet_0').length`
-                        }
-                    }
-                }
-            }
         ]
     };
+
+    switch (unitStyle) {
+        case 'square': {
+            // barFacet.signals.push(
+            //     { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
+            //     { name: "marksize", update: "bandWidth/cellcount-gap" }
+            // );
+            barFacet.data = [
+                {
+                    name: 'squares',
+                    source: 'bandfacet_0',
+                    transform: [
+                        {
+                            type: 'window',
+                            ops: [
+                                'count'
+                            ],
+                            as: [
+                                'squarecount'
+                            ]
+                        },
+                        {
+                            type: "extent",
+                            field: "squarecount",
+                            signal: "maxsquarecount"
+                        }
+                    ]
+                }
+            ];
+            const squareMark: Vega.Mark = {
+                name: 'squaremarks',
+                type: 'rect',
+                from: {
+                    data: 'squares'
+                },
+                encode: {
+                    update: {
+                    }
+                }
+            };
+            modifyMark(squareMark, info, getPositionCorrection(info));
+            barFacet.marks.push(squareMark);
+            break;
+        }
+    }
+
     if (facet) {
         const cell = outputSpec.marks.filter(m => m.name === 'cell')[0] as Vega.Mark & Vega.Scope;
         const from = cell.from as Vega.FromFacet & { facet: Vega.Facet; };
@@ -272,7 +318,7 @@ function getPositionCorrection(info: BarChartInfo) {
     if (info.quantitativeBand) {
         return info.isBar
             ?
-            '(-bandWidth - 0.5 * bandWidth * bandPadding)'
+            '( - 0.5 * bandWidth * bandPadding)'
             :
             '(0.75 * bandWidth * bandPadding)'
     }
@@ -317,10 +363,16 @@ function addSignals(signals: Vega.Signal[], bandScaleName: string, countSize: st
             { name: "child_height", update: "height" },
         ]);
     }
+
     signals.push.apply(signals, [
         { name: "bandWidth", update: `bandwidth('${bandScaleName}')` },
-        { name: 'bandPadding', value: 0.1 },
-        { name: "cellcount", update: `ceil(sqrt(maxcount[1]*(bandWidth/${countSize})))` },
+        { name: 'bandPadding', value: 0.1 }
+    ]);
+
+    //TODO only for square
+    signals.push.apply(signals, [
+        { name: "aspect", update: `bandWidth/${countSize}` },
+        { name: "cellcount", update: `ceil(sqrt(maxcount[1]*aspect))` },
         { name: "gap", update: "min(0.1*(bandWidth/(cellcount-1)),1)" },
         { name: "marksize", update: "bandWidth/cellcount-gap" }
     ]);
@@ -346,20 +398,20 @@ function modifyMark(mark0: Vega.Mark, info: BarChartInfo, offsetAdditionExpressi
     const { update } = mark0.encode;
     const subtractMarksize = !info.isBar;
 
-    const expressions = ['bandWidth /cellcount * ( (datum.__count-1) %cellcount)'];
+    const expressions = ['bandWidth /cellcount * ( (datum.squarecount-1) %cellcount)'];
     if (offsetAdditionExpression) {
         expressions.push(offsetAdditionExpression);
     }
 
     update[info.bandDim] = {
-        scale: info.bandDim,
-        field: info.bandGroup,
+        //scale: info.bandDim,
+        //field: info.bandGroup,
         offset: {
             signal: expressions.join(' + ')
         }
     };
     update[info.countDim] = {
-        signal: `scale('${info.countDim}', floor((datum.__count-1)/cellcount) * cellcount)${subtractMarksize ? '-marksize' : ''}`
+        signal: `scale('${info.countDim}', floor((datum.squarecount-1)/cellcount) * cellcount)${subtractMarksize ? '-marksize - ytop' : ''}`
     };
 
     update.width = update.height = { signal: "marksize" };
