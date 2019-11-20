@@ -14,6 +14,7 @@ interface TransformItem<T extends Vega.Transforms> {
 }
 
 interface BarChartInfo {
+    aggregateEncoding: TypedFieldDef<string, StandardType>;
     bandEncoding: TypedFieldDef<string, StandardType>;
     isBar: boolean;
     bandDim: string;
@@ -43,7 +44,8 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
             bandDim: 'y',
             countDim: 'x',
             countSize: 'child_width',
-            bandEncoding: yEncoding
+            bandEncoding: yEncoding,
+            aggregateEncoding: xEncoding
         };
     } else {
         info = {
@@ -52,7 +54,8 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
             bandDim: 'x',
             countDim: 'y',
             countSize: 'child_height',
-            bandEncoding: xEncoding
+            bandEncoding: xEncoding,
+            aggregateEncoding: yEncoding
         };
     }
     info.quantitativeBand = info.bandEncoding.type === 'quantitative';
@@ -130,16 +133,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                 groupby: markAndGroupBy.groupby
             }
         },
-        signals: [
-            {
-                name: 'ytop',
-                update: info.isBar
-                    ?
-                    `scale('${info.bandDim}', parent['${info.bandGroup}'])`
-                    :
-                    `scale('${info.countDim}', parent['count'])`
-            }
-        ],
+        signals: [],
         encode: {
             update: info.isBar
                 ?
@@ -185,13 +179,16 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                     }
                 }
         },
-        marks: [
-        ]
+        marks: []
     };
 
     switch (unitStyle) {
         case 'square': {
             squareMarks(info, outputSpec, barFacet);
+            break;
+        }
+        case 'treemap': {
+            treeMarks(info, outputSpec, barFacet);
             break;
         }
     }
@@ -246,7 +243,73 @@ function unitizeBasic(info: BarChartInfo, outputSpec: Vega.Spec) {
     return { marks, groupby: [info.bandGroup] };
 }
 
+function treeMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mark & Vega.Scope) {
+    barFacet.signals.push(
+        {
+            name: 'barWidth',
+            update: info.isBar
+                ?
+                `scale('${info.countDim}', parent['count'])`
+                :
+                'bandWidth'
+        },
+        {
+            name: 'barHeight',
+            update: info.isBar
+                ?
+                'bandWidth'
+                :
+                `child_height - scale('${info.countDim}', parent['count'])`
+        }
+    );
+    barFacet.data = [
+        {
+            name: 'treemapData',
+            source: 'bandfacet_0',
+            transform: [
+                {
+                    type: 'nest'
+                },
+                {
+                    type: 'treemap',
+                    field: info.bandEncoding.field,
+                    sort: { field: 'value', order: 'descending' },
+                    round: true,
+                    method: 'squarify',
+                    padding: 1,
+                    size: [{ signal: 'barWidth' }, { signal: 'barHeight' }]
+                }
+            ]
+        }
+    ];
+    const treemapMark: Vega.Mark = {
+        name: 'treemapMarks',
+        type: "rect",
+        from: {
+            data: "treemapData"
+        },
+        encode: {
+            update: {
+                x: { field: "x0" },
+                x2: { field: "x1" },
+                y: { field: "y0" },
+                y2: { field: "y1" }
+            }
+        }
+    };
+    barFacet.marks.push(treemapMark);
+}
+
 function squareMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mark & Vega.Scope) {
+    barFacet.signals.push({
+        name: 'ytop',
+        update: info.isBar
+            ?
+            `scale('${info.bandDim}', parent['${info.bandGroup}'])`
+            :
+            `scale('${info.countDim}', parent['count'])`
+    },
+    );
     barFacet.data = [
         {
             name: 'squares',
@@ -279,7 +342,7 @@ function squareMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.M
             update: {}
         }
     };
-    modifyMark(squareMark, info, getPositionCorrection(info));
+    modifySquareMark(squareMark, info, getPositionCorrection(info));
     barFacet.marks.push(squareMark);
 
     //only for square
@@ -345,7 +408,7 @@ function addBandScale(scales: Vega.Scale[], name: string, range: Vega.RangeBand)
     });
 }
 
-function modifyMark(mark0: Vega.Mark, info: BarChartInfo, offsetAdditionExpression?: string) {
+function modifySquareMark(mark0: Vega.Mark, info: BarChartInfo, offsetAdditionExpression?: string) {
     const { update } = mark0.encode;
     const subtractMarksize = !info.isBar;
 
