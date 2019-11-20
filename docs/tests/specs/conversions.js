@@ -12,6 +12,12 @@ var conversions = [
     ]
   },
   {
+    "src": "bar-categorical-sum.json",
+    "outputs": [
+      "treemap-bar-categorical-sum.json"
+    ]
+  },
+  {
     "src": "bar-categorical.json",
     "outputs": [
       "square-bar-categorical.json"
@@ -27,6 +33,12 @@ var conversions = [
     "src": "bar-quantitative-facet-quantitative.json",
     "outputs": [
       "square-bar-quantitative-facet-quantitative.json"
+    ]
+  },
+  {
+    "src": "bar-quantitative-sum.json",
+    "outputs": [
+      "treemap-bar-quantitative-sum.json"
     ]
   },
   {
@@ -48,6 +60,12 @@ var conversions = [
     ]
   },
   {
+    "src": "column-categorical-sum.json",
+    "outputs": [
+      "treemap-column-categorical-sum.json"
+    ]
+  },
+  {
     "src": "column-categorical.json",
     "outputs": [
       "square-column-categorical.json"
@@ -63,6 +81,12 @@ var conversions = [
     "src": "column-quantitative-facet-quantitative.json",
     "outputs": [
       "square-column-quantitative-facet-quantitative.json"
+    ]
+  },
+  {
+    "src": "column-quantitative-sum.json",
+    "outputs": [
+      "treemap-column-quantitative-sum.json"
     ]
   },
   {
