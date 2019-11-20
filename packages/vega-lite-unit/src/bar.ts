@@ -109,13 +109,6 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
         zeroData.transform.push(data0.transform.shift());
     }
 
-    //add identifier
-    // const idts: Vega.IdentifierTransform = {
-    //     type: 'identifier',
-    //     as: 'id'
-    // };
-    // data0.transform.unshift(idts);
-
     //add signals
     outputSpec.signals = outputSpec.signals || [];
     addSignals(outputSpec.signals, info.bandScaleName, !facet);
@@ -264,31 +257,12 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
     }
     markAndGroupBy.marks.push(barFacet);
 
-    //convert aggreagate to window
-    //const windowTransform = createWindowTransform(markAndGroupBy.groupby);
-    //const aggregateTransformIndex = findIndexOfTransformByType(data0, 'aggregate');
-    //info.data0.transform[aggregateTransformIndex] = windowTransform;
-
-    //modify mark
-    //const positionCorrection = getPositionCorrection(info);
-    //modifyMark(markAndGroupBy.mark0, info, positionCorrection);
-
-    //remove stack
-    //const stackTransformIndex = findIndexOfTransformByType(data0, 'stack');
-    //if (stackTransformIndex) {
-    //data0.transform.splice(stackTransformIndex, 1);
-    //}
-
     //add maxcount
     data0.transform.push({
         type: "extent",
         field: "__count",
         signal: "maxcount"
     })
-
-    //modify y scale
-    //const yScale = findScaleByName<Vega.LinearScale>(outputSpec.scales, info.countDim);
-    //modifyCountScale(yScale);
 }
 
 function unitizeFaceted(info: BarChartInfo, outputSpec: Vega.Spec, facet: FacetEncodingFieldDef<Field>) {
@@ -323,24 +297,6 @@ function getPositionCorrection(info: BarChartInfo) {
             :
             '(0.75 * bandWidth * bandPadding)'
     }
-}
-
-function createWindowTransform(groupby: Vega.FieldRef[]) {
-    const wt: Vega.WindowTransform = {
-        type: 'window',
-
-        //group by facet, then by category / bin
-        groupby,
-
-        ops: ["count"],
-
-        //Is sort necessary?
-        //sort: { "field": ["id"], "order": ["ascending"] },
-
-        fields: ["id"],
-        as: ["__count"]
-    };
-    return wt;
 }
 
 function addSequence(data: Vega.Data[], binSignalName: string) {
@@ -418,14 +374,6 @@ function modifyBandScale(bandScale: Vega.BandScale) {
     bandScale.padding = { signal: 'bandPadding' };
 }
 
-function modifyCountScale(countScale: Vega.LinearScale) {
-    const domain = countScale.domain as Vega.DataRef;
-    //change y scale to __count only
-    domain.field = "__count";
-    const domain2 = countScale.domain as Vega.MultiDataRef;
-    delete domain2.fields;
-}
-
 function findMarkWithScope(ms: Vega.Mark[]) {
     for (let i = 0; i < ms.length; i++) {
         let m = ms[i];
@@ -443,15 +391,6 @@ function findBinTransform(d: Vega.Data, fieldName: string) {
         let transform = d.transform[i];
         if (transform.type === 'bin' && transform.field === fieldName) {
             return { transform, i } as TransformItem<Vega.BinTransform>;
-        }
-    }
-}
-
-function findIndexOfTransformByType(d: Vega.Data, type: 'aggregate' | 'stack') {
-    for (let i = 0; i < d.transform.length; i++) {
-        let transform = d.transform[i];
-        if (transform.type === type) {
-            return i;
         }
     }
 }
