@@ -86,7 +86,18 @@
           "data": "source_00",
           "groupby": [
             "Class"
-          ]
+          ],
+          "aggregate": {
+            "as": [
+              "sum_TicketCost"
+            ],
+            "fields": [
+              "TicketCost"
+            ],
+            "ops": [
+              "sum"
+            ]
+          }
         }
       },
       "signals": [
@@ -96,7 +107,7 @@
         },
         {
           "name": "barHeight",
-          "update": "child_height - scale('y', parent['count'])"
+          "update": "child_height - scale('y', parent['sum_TicketCost'])"
         }
       ],
       "encode": {
@@ -108,10 +119,10 @@
             "signal": "bandWidth"
           },
           "y": {
-            "signal": "scale('y', datum['count'])"
+            "signal": "scale('y', datum['sum_TicketCost'])"
           },
           "height": {
-            "signal": "child_height - scale('y', datum['count'])"
+            "signal": "child_height - scale('y', datum['sum_TicketCost'])"
           },
           "fill": {
             "signal": "\"pink\""
@@ -156,7 +167,7 @@
             },
             {
               "type": "treemap",
-              "field": "Class",
+              "field": "TicketCost",
               "sort": {
                 "field": "value",
                 "order": "descending"

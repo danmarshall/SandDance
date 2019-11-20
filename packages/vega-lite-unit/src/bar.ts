@@ -123,15 +123,34 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
 
     //add a facet for the column
     markAndGroupBy.marks[0].encode.update.opacity = { value: 0.2 };
+
+    const fromFacet: Vega.Facet = {
+        name: 'bandfacet_0',
+        data: facet ? 'facet' : 'source_00',
+        groupby: markAndGroupBy.groupby
+    };
+    let aggField: string;
+    switch (info.aggregateEncoding.aggregate) {
+        case 'count': {
+            aggField = 'count'
+            break;
+        }
+        case 'sum': {
+            const aggregateTransform = findAggregateTransform(info.data0);
+            fromFacet.aggregate = {
+                as: aggregateTransform.as as string[],
+                fields: aggregateTransform.fields as string[],
+                ops: aggregateTransform.ops as string[]
+            }
+            aggField = aggregateTransform.as[0];
+            break;
+        }
+    }
     const barFacet: Vega.Mark = {
         name: 'bandfacet',
         type: 'group',
         from: {
-            facet: {
-                name: 'bandfacet_0',
-                data: facet ? 'facet' : 'source_00',
-                groupby: markAndGroupBy.groupby
-            }
+            facet: fromFacet
         },
         signals: [],
         encode: {
@@ -148,7 +167,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                         signal: `scale('${info.countDim}', 0)`
                     },
                     width: {
-                        signal: `scale('${info.countDim}', datum['count'])`
+                        signal: `scale('${info.countDim}', datum['${aggField}'])`
                     },
                     fill: {
                         signal: '"pink"'
@@ -166,10 +185,10 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
                         signal: `bandWidth`
                     },
                     y: {
-                        signal: `scale('${info.countDim}', datum['count'])`
+                        signal: `scale('${info.countDim}', datum['${aggField}'])`
                     },
                     height: {
-                        signal: `child_height - scale('${info.countDim}', datum['count'])`
+                        signal: `child_height - scale('${info.countDim}', datum['${aggField}'])`
                     },
                     fill: {
                         signal: '"pink"'
@@ -188,7 +207,7 @@ export function unitizeBar(inputSpec: TopLevelUnitSpec, outputSpec: Vega.Spec, u
             break;
         }
         case 'treemap': {
-            treeMarks(info, outputSpec, barFacet);
+            treeMarks(info, aggField, barFacet);
             break;
         }
     }
@@ -243,13 +262,13 @@ function unitizeBasic(info: BarChartInfo, outputSpec: Vega.Spec) {
     return { marks, groupby: [info.bandGroup] };
 }
 
-function treeMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mark & Vega.Scope) {
+function treeMarks(info: BarChartInfo, aggField: string, barFacet: Vega.Mark & Vega.Scope) {
     barFacet.signals.push(
         {
             name: 'barWidth',
             update: info.isBar
                 ?
-                `scale('${info.countDim}', parent['count'])`
+                `scale('${info.countDim}', parent['${aggField}'])`
                 :
                 'bandWidth'
         },
@@ -259,7 +278,7 @@ function treeMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mar
                 ?
                 'bandWidth'
                 :
-                `child_height - scale('${info.countDim}', parent['count'])`
+                `child_height - scale('${info.countDim}', parent['${aggField}'])`
         }
     );
     barFacet.data = [
@@ -272,7 +291,7 @@ function treeMarks(info: BarChartInfo, outputSpec: Vega.Spec, barFacet: Vega.Mar
                 },
                 {
                     type: 'treemap',
-                    field: info.bandEncoding.field,
+                    field: info.aggregateEncoding.field,
                     sort: { field: 'value', order: 'descending' },
                     round: true,
                     method: 'squarify',
@@ -447,6 +466,15 @@ function findMarkWithScope(ms: Vega.Mark[]) {
             if (s.marks) {
                 return s.marks;
             }
+        }
+    }
+}
+
+function findAggregateTransform(d: Vega.Data) {
+    for (let i = 0; i < d.transform.length; i++) {
+        let transform = d.transform[i];
+        if (transform.type === 'aggregate') {
+            return transform;
         }
     }
 }
